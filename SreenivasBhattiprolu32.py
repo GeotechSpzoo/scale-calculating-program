@@ -118,7 +118,7 @@ propList = ['Area',
             'MeanIntensity',
             'MaxIntensity']
 
-# Uncomment for CSV output
+# todo Uncomment for CSV output
 # output_file = open('image_measurements.csv', 'w')
 # output_file.write(',' + ",".join(propList) + '\n')  # join strings in array by commas, leave first cell blank
 # # First cell blank to leave room for header (column names)
