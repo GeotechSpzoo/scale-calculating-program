@@ -12,6 +12,29 @@ def midpoint(ptA, ptB):
     return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
 
 
+def increase_contrast(img):
+    # -----Converting image to LAB Color model-----------------------------------
+    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    # cv2.imshow("lab", lab)
+    # -----Splitting the LAB image to different channels-------------------------
+    l, a, b = cv2.split(lab)
+    # cv2.imshow('l_channel', l)
+    # cv2.imshow('a_channel', a)
+    # cv2.imshow('b_channel', b)
+    # -----Applying CLAHE to L-channel-------------------------------------------
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    cl = clahe.apply(l)
+    # cv2.imshow('CLAHE output', cl)
+    # -----Merge the CLAHE enhanced L-channel with the a and b channel-----------
+    limg = cv2.merge((cl, a, b))
+    # cv2.imshow('limg', limg)
+    # -----Converting image from LAB Color model to RGB model--------------------
+    final = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
+    # cv2.imshow('final', final)
+    # _____END_____#
+    return final
+
+
 if __name__ == '__main__':
     # construct the argument parse and parse the arguments
     ap = argparse.ArgumentParser()
@@ -19,19 +42,37 @@ if __name__ == '__main__':
                     help="path to the input image")
     ap.add_argument("-w", "--width", type=float, required=True,
                     help="width of the left-most object in the image (in inches)")
-    argv = ["", "-w0.00393701", "-iIMG_20210709_133620.jpg"]
+    argv = ["", "-w.00393701", "-i11-11_o1_0_min_UV.jpg"]
     args = vars(ap.parse_args(argv[1:]))
 
     # load the image, convert it to grayscale, and blur it slightly
     image = cv2.imread(args["image"])
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray = cv2.GaussianBlur(gray, (7, 7), 0)
+    # cv2.imshow("image", image)
+    # cv2.waitKey(0)
+
+    contrast = increase_contrast(image)
+    # cv2.imshow("contrast", contrast)
+    # cv2.waitKey(0)
+
+    gray = cv2.cvtColor(contrast, cv2.COLOR_BGR2GRAY)
+    # cv2.imshow("ImageGray", gray)
+    # cv2.waitKey(0)
+
+    # gray = cv2.GaussianBlur(gray, (7, 7), 0)
+    # cv2.imshow("ImageGrayBlur", gray)
+    # cv2.waitKey(0)
 
     # perform edge detection, then perform a dilation + erosion to
     # close gaps in between object edges
-    edged = cv2.Canny(gray, 50, 100)
-    edged = cv2.dilate(edged, None, iterations=1)
-    edged = cv2.erode(edged, None, iterations=1)
+    edged = cv2.Canny(gray, 27, 369)
+    cv2.imshow("Edged", edged)
+    cv2.waitKey(0)
+    # edged = cv2.dilate(edged, None, iterations=1)
+    # cv2.imshow("Dilated", edged)
+    # cv2.waitKey(0)
+    # edged = cv2.erode(edged, None, iterations=1)
+    # cv2.imshow("Eroded", edged)
+    # cv2.waitKey(0)
 
     # find contours in the edge map
     cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL,
