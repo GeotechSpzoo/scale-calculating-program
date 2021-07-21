@@ -75,12 +75,12 @@ edged = cv2.Canny(thresh, 27, 369)
 cv2.imshow("Edged", edged)
 cv2.waitKey(0)
 
-# edged = cv2.dilate(edged, None, iterations=1)
-# cv2.imshow("Dilated", edged)
-# cv2.waitKey(0)
-# edged = cv2.erode(edged, None, iterations=1)
-# cv2.imshow("Eroded", edged)
-# cv2.waitKey(0)
+edged = cv2.dilate(edged, None, iterations=1)
+cv2.imshow("Dilated", edged)
+cv2.waitKey(0)
+edged = cv2.erode(edged, None, iterations=1)
+cv2.imshow("Eroded", edged)
+cv2.waitKey(0)
 
 # find contours in the edge map
 cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL,
@@ -94,7 +94,7 @@ cnts = imutils.grab_contours(cnts)
 # loop over the contours individually
 for c in cnts:
     # if the contour is not sufficiently large, ignore it
-    if cv2.contourArea(c) < 100:
+    if cv2.contourArea(c) < 1:
         continue
 
     # compute the rotated bounding box of the contour
@@ -108,11 +108,11 @@ for c in cnts:
     # order, then draw the outline of the rotated bounding
     # box
     box = perspective.order_points(box)
-    cv2.drawContours(orig, [box.astype("int")], -1, (0, 255, 0), 2)
+    cv2.drawContours(orig, [box.astype("int")], -1, (0, 255, 0), 1)
 
     # loop over the original points and draw them
     for (x, y) in box:
-        cv2.circle(orig, (int(x), int(y)), 5, (0, 0, 255), -1)
+        cv2.circle(orig, (int(x), int(y)), 1, (0, 0, 255), -1)
 
     # unpack the ordered bounding box, then compute the midpoint
     # between the top-left and top-right coordinates, followed by
@@ -127,16 +127,16 @@ for c in cnts:
     (trbrX, trbrY) = midpoint(tr, br)
 
     # draw the midpoints on the image
-    cv2.circle(orig, (int(tltrX), int(tltrY)), 5, (255, 0, 0), -1)
-    cv2.circle(orig, (int(blbrX), int(blbrY)), 5, (255, 0, 0), -1)
-    cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
-    cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (255, 0, 0), -1)
+    # cv2.circle(orig, (int(tltrX), int(tltrY)), 1, (255, 0, 0), -1)
+    # cv2.circle(orig, (int(blbrX), int(blbrY)), 1, (255, 0, 0), -1)
+    # cv2.circle(orig, (int(tlblX), int(tlblY)), 1, (255, 0, 0), -1)
+    # cv2.circle(orig, (int(trbrX), int(trbrY)), 1, (255, 0, 0), -1)
 
     # draw lines between the midpoints
-    cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),
-             (255, 0, 255), 2)
-    cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
-             (255, 0, 255), 2)
+    # cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),
+    #          (255, 0, 255), 1)
+    # cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),
+    #          (255, 0, 255), 1)
 
     # compute the Euclidean distance between the midpoints
     dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
@@ -152,10 +152,10 @@ for c in cnts:
     # draw the object sizes on the image
     cv2.putText(orig, "{:.1f}in".format(dimA),
                 (int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
-                0.65, (255, 255, 255), 2)
+                0.65, (255, 255, 255), 1)
     cv2.putText(orig, "{:.1f}in".format(dimB),
                 (int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
-                0.65, (255, 255, 255), 2)
+                0.65, (255, 255, 255), 1)
     # show the output image
     cv2.imshow("Image", orig)
     cv2.waitKey(0)
