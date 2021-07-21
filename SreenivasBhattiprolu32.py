@@ -31,7 +31,7 @@ def increase_contrast(imgToContrast):
     # cv2.imshow('a_channel', a)
     # cv2.imshow('b_channel', b)
     # -----Applying CLAHE to L-channel-------------------------------------------
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(128, 128))
     cl = clahe.apply(l)
     # cv2.imshow('CLAHE output', cl)
     # -----Merge the CLAHE enhanced L-channel with the a and b channel-----------
@@ -44,7 +44,20 @@ def increase_contrast(imgToContrast):
     return final
 
 # STEP1 - Read image and define pixel size
-img = cv2.imread("11-11_o1_0_min_UV.jpg", 0)
+img = cv2.imread("11-11_o1_0_min_UV.jpg", cv2.IMREAD_COLOR)
+# cv2.imshow("img", img)
+# cv2.waitKey(0)
+contrast = increase_contrast(img)
+cv2.imshow("contrast0", contrast)
+cv2.waitKey(0)
+# contrast1 = increase_contrast(contrast0.copy())
+# cv2.imshow("contrast1", contrast1)
+# cv2.waitKey(0)
+# contrast2 = increase_contrast(contrast1.copy())
+# cv2.imshow("contrast2", contrast2)
+# cv2.waitKey(0)
+
+img = cv2.cvtColor(contrast, cv2.COLOR_BGR2GRAY)
 
 pixels_to_um = 0.5  # (1 px = 500 nm)
 
