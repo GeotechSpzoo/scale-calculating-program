@@ -38,12 +38,12 @@ REF_OBJ_SIZE_IN_INCH = 10.0
 PIXELS_PER_METRIC = None
 
 # STEP1 - Read image and define pixel size
-img = cv2.imread("11-11_o1_0_min_UV.jpg", cv2.IMREAD_COLOR)
-# cv2.imshow("img", img)
-# cv2.waitKey(0)
-contrast = increase_contrast(img)
-cv2.imshow("contrast0", contrast)
+img = cv2.imread("0_h_0_max_UV.jpg", cv2.IMREAD_COLOR)
+cv2.imshow("img", img)
 cv2.waitKey(0)
+# contrast = increase_contrast(img)
+# cv2.imshow("contrast0", contrast)
+# cv2.waitKey(0)
 # contrast1 = increase_contrast(contrast0.copy())
 # cv2.imshow("contrast1", contrast1)
 # cv2.waitKey(0)
@@ -51,7 +51,7 @@ cv2.waitKey(0)
 # cv2.imshow("contrast2", contrast2)
 # cv2.waitKey(0)
 
-gray = cv2.cvtColor(contrast, cv2.COLOR_BGR2GRAY)
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 # Step 2: Denoising, if required and threshold image
 
@@ -98,6 +98,7 @@ for c in cnts:
         continue
 
     # compute the rotated bounding box of the contour
+    # orig = cv2.cvtColor(edged.copy(), cv2.COLOR_GRAY2BGR)
     orig = img.copy()
     box = cv2.minAreaRect(c)
     box = cv2.cv.BoxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
