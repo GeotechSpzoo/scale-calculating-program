@@ -20,6 +20,29 @@ from matplotlib import pyplot as plt
 from scipy import ndimage
 from skimage import measure, color, io
 
+
+def increase_contrast(imgToContrast):
+    # -----Converting image to LAB Color model-----------------------------------
+    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    # cv2.imshow("lab", lab)
+    # -----Splitting the LAB image to different channels-------------------------
+    l, a, b = cv2.split(lab)
+    # cv2.imshow('l_channel', l)
+    # cv2.imshow('a_channel', a)
+    # cv2.imshow('b_channel', b)
+    # -----Applying CLAHE to L-channel-------------------------------------------
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    cl = clahe.apply(l)
+    # cv2.imshow('CLAHE output', cl)
+    # -----Merge the CLAHE enhanced L-channel with the a and b channel-----------
+    limg = cv2.merge((cl, a, b))
+    # cv2.imshow('limg', limg)
+    # -----Converting image from LAB Color model to RGB model--------------------
+    final = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
+    # cv2.imshow('final', final)
+    # _____END_____#
+    return final
+
 # STEP1 - Read image and define pixel size
 img = cv2.imread("11-11_o1_0_min_UV.jpg", 0)
 
@@ -40,12 +63,16 @@ ret, thresh = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 # View the thresh image. Some boundaries are ambiguous / faint.
 # Some pixles in the middle.
 # Need to perform morphological operations to enhance.
+cv2.imshow("thershold", thresh)
+cv2.waitKey(0)
 
 # Step 3: Clean up image, if needed (erode, etc.) and create a mask for grains
 
-kernel = np.ones((3, 3), np.uint8)
+kernel = np.ones((1, 1), np.uint8)
 eroded = cv2.erode(thresh, kernel, iterations=1)
 dilated = cv2.dilate(eroded, kernel, iterations=1)
+cv2.imshow("dilated", dilated)
+cv2.waitKey(0)
 
 # Now, we need to apply threshold, meaning convert uint8 image to boolean.
 mask = dilated == 255  # Sets TRUE for all 255 valued pixels and FALSE for 0
