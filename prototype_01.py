@@ -34,14 +34,15 @@ def increase_contrast(imgToContrast):
     return final
 
 
+PHOTO_PATH = "piasekSredni/0_piasekSredni_0_min_Normal.jpg"
 REF_OBJ_SIZE_IN_INCH = 10.0
 PIXELS_PER_METRIC = None
 
 # STEP1 - Read image and define pixel size
-img = cv2.imread("0_h_0_max_UV.jpg", cv2.IMREAD_COLOR)
-cv2.imshow("img", img)
-cv2.waitKey(0)
-# contrast = increase_contrast(img)
+img = cv2.imread(PHOTO_PATH, cv2.IMREAD_COLOR)
+# cv2.imshow("img", img)
+# cv2.waitKey(0)
+contrast = increase_contrast(img)
 # cv2.imshow("contrast0", contrast)
 # cv2.waitKey(0)
 # contrast1 = increase_contrast(contrast0.copy())
@@ -51,7 +52,7 @@ cv2.waitKey(0)
 # cv2.imshow("contrast2", contrast2)
 # cv2.waitKey(0)
 
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+gray = cv2.cvtColor(contrast, cv2.COLOR_BGR2GRAY)
 
 # Step 2: Denoising, if required and threshold image
 
@@ -60,27 +61,27 @@ gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 # plt.hist(img.flat, bins=100, range=(0,255))
 
 # Change the grey image to binary by thresholding.
-ret, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+# ret, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 # print(ret)  #Gives 157 on grains2.jpg. OTSU determined this to be the best threshold.
 
 # View the thresh image. Some boundaries are ambiguous / faint.
 # Some pixles in the middle.
 # Need to perform morphological operations to enhance.
-cv2.imshow("thershold", thresh)
-cv2.waitKey(0)
+# cv2.imshow("thershold", thresh)
+# cv2.waitKey(0)
 
 # perform edge detection, then perform a dilation + erosion to
 # close gaps in between object edges
-edged = cv2.Canny(thresh, 27, 369)
+edged = cv2.Canny(gray, 100, 180, L2gradient=cv2.NORM_L2)
 cv2.imshow("Edged", edged)
 cv2.waitKey(0)
 
 edged = cv2.dilate(edged, None, iterations=1)
-cv2.imshow("Dilated", edged)
-cv2.waitKey(0)
+# cv2.imshow("Dilated", edged)
+# cv2.waitKey(0)
 edged = cv2.erode(edged, None, iterations=1)
-cv2.imshow("Eroded", edged)
-cv2.waitKey(0)
+# cv2.imshow("Eroded", edged)
+# cv2.waitKey(0)
 
 # find contours in the edge map
 cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL,
@@ -92,6 +93,7 @@ cnts = imutils.grab_contours(cnts)
 (cnts, _) = contours.sort_contours(cnts)
 
 # loop over the contours individually
+orig = img.copy()
 for c in cnts:
     # if the contour is not sufficiently large, ignore it
     if cv2.contourArea(c) < 1:
@@ -99,7 +101,6 @@ for c in cnts:
 
     # compute the rotated bounding box of the contour
     # orig = cv2.cvtColor(edged.copy(), cv2.COLOR_GRAY2BGR)
-    orig = img.copy()
     box = cv2.minAreaRect(c)
     box = cv2.cv.BoxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
     box = np.array(box, dtype="int")
@@ -151,12 +152,12 @@ for c in cnts:
     dimA = dA / PIXELS_PER_METRIC
     dimB = dB / PIXELS_PER_METRIC
     # draw the object sizes on the image
-    cv2.putText(orig, "{:.1f}in".format(dimA),
-                (int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
-                0.65, (255, 255, 255), 1)
-    cv2.putText(orig, "{:.1f}in".format(dimB),
-                (int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
-                0.65, (255, 255, 255), 1)
+    # cv2.putText(orig, "{:.1f}in".format(dimA),
+    #             (int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
+    #             0.65, (255, 255, 255), 1)
+    # cv2.putText(orig, "{:.1f}in".format(dimB),
+    #             (int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
+    #             0.65, (255, 255, 255), 1)
     # show the output image
-    cv2.imshow("Image", orig)
-    cv2.waitKey(0)
+cv2.imshow("Image", orig)
+cv2.waitKey(0)
