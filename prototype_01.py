@@ -42,8 +42,14 @@ PIXELS_PER_METRIC = None
 img = cv2.imread(PHOTO_PATH, cv2.IMREAD_COLOR)
 # cv2.imshow("img", img)
 # cv2.waitKey(0)
-contrast = increase_contrast(img)
-# cv2.imshow("contrast0", contrast)
+# # Sharpen image
+# kernel = np.array([[-1.1, -1.1, -1.1],
+#                    [-1.1, 9.8, -1.1],
+#                    [-1.1, -1.1, -1.1]])
+# sharpened = cv2.filter2D(img, -1, kernel)  # applying the sharpening kernel to the input image & displaying it.
+# cv2.imshow('Sharpened', sharpened)
+# cv2.waitKey(0)
+# cv2.imshow("contrast0", increase_contrast(sharpened))
 # cv2.waitKey(0)
 # contrast1 = increase_contrast(contrast0.copy())
 # cv2.imshow("contrast1", contrast1)
@@ -52,7 +58,7 @@ contrast = increase_contrast(img)
 # cv2.imshow("contrast2", contrast2)
 # cv2.waitKey(0)
 
-gray = cv2.cvtColor(contrast, cv2.COLOR_BGR2GRAY)
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 # Step 2: Denoising, if required and threshold image
 
@@ -70,11 +76,101 @@ gray = cv2.cvtColor(contrast, cv2.COLOR_BGR2GRAY)
 # cv2.imshow("thershold", thresh)
 # cv2.waitKey(0)
 
-# perform edge detection, then perform a dilation + erosion to
-# close gaps in between object edges
-edged = cv2.Canny(gray, 100, 180, L2gradient=cv2.NORM_L2)
-cv2.imshow("Edged", edged)
+# Blur to remove noise
+blur = cv2.bilateralFilter(gray.copy(), 5, 5, 5)
+cv2.imshow("blur1", blur)
 cv2.waitKey(0)
+blur2 = cv2.bilateralFilter(blur.copy(), 5, 5, 5)
+cv2.imshow("blur2", blur2)
+cv2.waitKey(0)
+blur3 = cv2.bilateralFilter(blur2.copy(), 5, 5, 5)
+cv2.imshow("blur3", blur3)
+cv2.waitKey(0)
+blur4 = cv2.bilateralFilter(blur3.copy(), 5, 5, 5)
+cv2.imshow("blur4", blur4)
+cv2.waitKey(0)
+blur5 = cv2.bilateralFilter(blur4.copy(), 5, 5, 5)
+cv2.imshow("blur5", blur5)
+cv2.waitKey(0)
+blur6 = cv2.bilateralFilter(blur5.copy(), 5, 5, 5)
+cv2.imshow("blur6", blur6)
+cv2.waitKey(0)
+blur7 = cv2.bilateralFilter(blur6.copy(), 5, 5, 5)
+cv2.imshow("blur7", blur7)
+cv2.waitKey(0)
+blur8 = cv2.bilateralFilter(blur7.copy(), 5, 5, 5)
+cv2.imshow("blur8", blur8)
+cv2.waitKey(0)
+blur9 = cv2.bilateralFilter(blur8.copy(), 5, 5, 5)
+cv2.imshow("blur9", blur9)
+cv2.waitKey(0)
+blur10 = cv2.bilateralFilter(blur9.copy(), 5, 5, 5)
+cv2.imshow("blur10", blur10)
+cv2.waitKey(0)
+
+# Find edges using canny edge detector
+def auto_canny(grayim, sigma=0.33):
+    # compute the median of the single channel pixel intensities
+    # v = np.median(grayim)  # 202.0
+    v = np.float64(20)
+    print(f"Before Canny Median {v}")
+    print(f"V is {type(v)}")
+    # apply automatic Canny edge detection using the computed median
+    lower = int(max(0, (1.0 - sigma) * v))
+    upper = int(min(255, (1.0 + sigma) * v))
+    edged = cv2.Canny(grayim, lower, upper)
+    # return the edged image
+    return edged
+
+
+canned = auto_canny(blur)
+cv2.imshow("canned1", canned)
+cv2.waitKey(0)
+canned2 = auto_canny(blur2)
+cv2.imshow("canned2", canned2)
+cv2.waitKey(0)
+canned3 = auto_canny(blur3)
+cv2.imshow("canned3", canned3)
+cv2.waitKey(0)
+canned4 = auto_canny(blur4)
+cv2.imshow("canned4", canned4)
+cv2.waitKey(0)
+canned5 = auto_canny(blur5)
+cv2.imshow("canned5", canned5)
+cv2.waitKey(0)
+canned6 = auto_canny(blur6)
+cv2.imshow("canned6", canned6)
+cv2.waitKey(0)
+canned7 = auto_canny(blur7)
+cv2.imshow("canned7", canned7)
+cv2.waitKey(0)
+canned8 = auto_canny(blur8)
+cv2.imshow("canned8", canned8)
+cv2.waitKey(0)
+canned9 = auto_canny(blur9)
+cv2.imshow("canned9", canned9)
+cv2.waitKey(0)
+canned10 = auto_canny(blur10)
+cv2.imshow("canned10", canned10)
+cv2.waitKey(0)
+
+# perform edge detection, then perform a dilation + erosion to
+# close gaps in between object
+edged = blur.copy()
+for i in range(21):
+    for j in range(21):
+        edged = cv2.Canny(gray, 20*i, 20*j, edged, L2gradient=cv2.NORM_L2)
+        cv2.imshow(f"Edged i: {i} j: {j}           threshold1: [{20*i}] threshold2: [{20*j}]", edged)
+        cv2.waitKey(0)
+# edged = cv2.Canny(gray, 60, 200, L2gradient=cv2.NORM_L2)
+# cv2.imshow("Edged2", edged)
+# cv2.waitKey(0)
+# edged = cv2.Canny(gray, 60, 255, L2gradient=cv2.NORM_L2)
+# cv2.imshow("Edged3", edged)
+# cv2.waitKey(0)
+# edged = cv2.Canny(gray, 60, 2048, L2gradient=cv2.NORM_L2)
+# cv2.imshow("Edged4", edged)
+# cv2.waitKey(0)
 
 edged = cv2.dilate(edged, None, iterations=1)
 # cv2.imshow("Dilated", edged)
@@ -96,7 +192,7 @@ cnts = imutils.grab_contours(cnts)
 orig = img.copy()
 for c in cnts:
     # if the contour is not sufficiently large, ignore it
-    if cv2.contourArea(c) < 1:
+    if cv2.contourArea(c) < 25:
         continue
 
     # compute the rotated bounding box of the contour
