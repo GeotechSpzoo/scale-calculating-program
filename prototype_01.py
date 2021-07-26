@@ -6,6 +6,10 @@ import numpy as np
 import imutils
 import cv2
 
+KEY_ESC = 27
+KEY_SPACE = 32
+KEY_BACKSPACE = 8
+
 
 def midpoint(ptA, ptB):
     return (ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5
@@ -76,42 +80,26 @@ gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 # cv2.imshow("thershold", thresh)
 # cv2.waitKey(0)
 
-# Blur to remove noise
-blur = cv2.bilateralFilter(gray.copy(), 5, 5, 5)
-cv2.imshow("blur1", blur)
-cv2.waitKey(0)
-blur2 = cv2.bilateralFilter(blur.copy(), 5, 5, 5)
-cv2.imshow("blur2", blur2)
-cv2.waitKey(0)
-blur3 = cv2.bilateralFilter(blur2.copy(), 5, 5, 5)
-cv2.imshow("blur3", blur3)
-cv2.waitKey(0)
-blur4 = cv2.bilateralFilter(blur3.copy(), 5, 5, 5)
-cv2.imshow("blur4", blur4)
-cv2.waitKey(0)
-blur5 = cv2.bilateralFilter(blur4.copy(), 5, 5, 5)
-cv2.imshow("blur5", blur5)
-cv2.waitKey(0)
-blur6 = cv2.bilateralFilter(blur5.copy(), 5, 5, 5)
-cv2.imshow("blur6", blur6)
-cv2.waitKey(0)
-blur7 = cv2.bilateralFilter(blur6.copy(), 5, 5, 5)
-cv2.imshow("blur7", blur7)
-cv2.waitKey(0)
-blur8 = cv2.bilateralFilter(blur7.copy(), 5, 5, 5)
-cv2.imshow("blur8", blur8)
-cv2.waitKey(0)
-blur9 = cv2.bilateralFilter(blur8.copy(), 5, 5, 5)
-cv2.imshow("blur9", blur9)
-cv2.waitKey(0)
-blur10 = cv2.bilateralFilter(blur9.copy(), 5, 5, 5)
-cv2.imshow("blur10", blur10)
-cv2.waitKey(0)
-
 # Find edges using canny edge detector
-def auto_canny(grayim, sigma=0.33):
+def auto_canny(grayim, sigma=0.33, v=202):
     # compute the median of the single channel pixel intensities
     # v = np.median(grayim)  # 202.0
+    # v = np.float64(20)
+    print(f"Before Canny Median {v}")
+    print(f"V is {type(v)}")
+    # apply automatic Canny edge detection using the computed median
+    lower = int(max(0, (1.0 - sigma) * v))
+    upper = int(min(255, (1.0 + sigma) * v))
+    edged = cv2.Canny(grayim, lower, upper)
+    # return the edged image
+    return edged
+
+
+# Find edges using canny edge detector
+def auto_canny_default(grayim):
+    # compute the median of the single channel pixel intensities
+    # v = np.median(grayim)  # 202.0
+    sigma = 0.33
     v = np.float64(20)
     print(f"Before Canny Median {v}")
     print(f"V is {type(v)}")
@@ -123,45 +111,71 @@ def auto_canny(grayim, sigma=0.33):
     return edged
 
 
-canned = auto_canny(blur)
-cv2.imshow("canned1", canned)
-cv2.waitKey(0)
-canned2 = auto_canny(blur2)
-cv2.imshow("canned2", canned2)
-cv2.waitKey(0)
-canned3 = auto_canny(blur3)
-cv2.imshow("canned3", canned3)
-cv2.waitKey(0)
-canned4 = auto_canny(blur4)
-cv2.imshow("canned4", canned4)
-cv2.waitKey(0)
-canned5 = auto_canny(blur5)
-cv2.imshow("canned5", canned5)
-cv2.waitKey(0)
-canned6 = auto_canny(blur6)
-cv2.imshow("canned6", canned6)
-cv2.waitKey(0)
-canned7 = auto_canny(blur7)
-cv2.imshow("canned7", canned7)
-cv2.waitKey(0)
-canned8 = auto_canny(blur8)
-cv2.imshow("canned8", canned8)
-cv2.waitKey(0)
-canned9 = auto_canny(blur9)
-cv2.imshow("canned9", canned9)
-cv2.waitKey(0)
-canned10 = auto_canny(blur10)
-cv2.imshow("canned10", canned10)
-cv2.waitKey(0)
+d = 4
+sigmaParam = 1
+cannySigma = 0.11
+cannyV = 30
+blurred = gray.copy()
+temp = cv2.bilateralFilter(gray.copy(), d, sigmaParam, sigmaParam)
+for i in range(5001):
+    temp = cv2.bilateralFilter(temp.copy(), d, sigmaParam, sigmaParam)
+    if i % 25 == 0:
+        cv2.imshow(f"blur {i}", temp)
+        cv2.waitKey(0)
+        canned = auto_canny(temp, cannySigma, cannyV)
+        cv2.imshow(f"canned {i}", canned)
+        cv2.waitKey(0)
 
+blurs = [temp]
 # perform edge detection, then perform a dilation + erosion to
 # close gaps in between object
-edged = blur.copy()
-for i in range(21):
-    for j in range(21):
-        edged = cv2.Canny(gray, 20*i, 20*j, edged, L2gradient=cv2.NORM_L2)
-        cv2.imshow(f"Edged i: {i} j: {j}           threshold1: [{20*i}] threshold2: [{20*j}]", edged)
-        cv2.waitKey(0)
+blrCount = 0
+for blr in blurs:
+    edged = blr.copy()
+    edged = auto_canny_default(edged)
+    cv2.imshow(f"Blur {blrCount}, auto_canny default params", edged)
+    cv2.waitKey(0)
+    key = None
+    for i in range(20):
+        for j in range(25):
+            edged = auto_canny(blr, i / 10, j * 10)
+            cv2.imshow(f"Blur {blrCount}, auto_canny i: {i} j: {j}           sigma: [{i/10}] v: [{j*10}]", edged)
+            key = cv2.waitKey(0)
+            if key == KEY_ESC:
+                break
+            elif key == KEY_BACKSPACE:
+                break
+            else:
+                continue
+        if key == KEY_ESC:
+            break
+        elif key == KEY_BACKSPACE:
+            continue
+        else:
+            continue
+    blrCount += 1
+blrCount = 0
+for blr in blurs:
+    edged = blr.copy()
+    key = None
+    blrCount += 1
+    for i in range(21):
+        for j in range(21):
+            edged = cv2.Canny(blr, 20*i, 20*j, edged, L2gradient=cv2.NORM_L2)
+            cv2.imshow(f"Blur {blrCount}, Edged i: {i} j: {j}           threshold1: [{20*i}] threshold2: [{20*j}]", edged)
+            key = cv2.waitKey(0)
+            if key == KEY_ESC:
+                break
+            elif key == KEY_BACKSPACE:
+                break
+            else:
+                continue
+        if key == KEY_ESC:
+            break
+        elif key == KEY_BACKSPACE:
+            continue
+        else:
+            continue
 # edged = cv2.Canny(gray, 60, 200, L2gradient=cv2.NORM_L2)
 # cv2.imshow("Edged2", edged)
 # cv2.waitKey(0)
