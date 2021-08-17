@@ -150,7 +150,7 @@ def find_contours_and_draw_them(img, edged, window_name):
         #             0.65, (255, 255, 255), 1)
         # show the output image
     cv2.imshow(window_name, orig)
-    cv2.waitKey(0)
+    return cv2.waitKey(0)
 
 
 # START
@@ -205,10 +205,15 @@ blrCount = 0
 # cv2.waitKey(0)
 temp = gray.copy()
 for n in range(5001):
+    key = None
     temp = cv2.bilateralFilter(temp.copy(), d, sigmaParam, sigmaParam)
     if n % 100 == 0:
         cv2.imshow(f"blur {n}", temp)
-        cv2.waitKey(0)
+        key = cv2.waitKey(0)
+        if key == KEY_ESC:
+            break
+        elif key == KEY_BACKSPACE:
+            continue
         # contrast = increase_contrast(temp)
         # cv2.imshow(f"Contrast {n}", contrast)
         # cv2.waitKey(0)
@@ -219,9 +224,8 @@ for n in range(5001):
         # sharpened = cv2.filter2D(temp, -1, kernel)  # applying the sharpening kernel to the input image & displaying it.
         # cv2.imshow(f"Sharpened {n}", sharpened)
         # cv2.waitKey(0)
-        key = None
         for i in range(11):
-            for j in range(10):
+            for j in range(15):
                 print("i:", i)
                 print("j:", j)
                 if i > 2 and j > 2:
@@ -239,14 +243,12 @@ for n in range(5001):
                     # cv2.imshow(f"Eroded {blrCount}, auto_canny i: {i} j: {j}           sigma: [{sigma}] v: [{v}]",
                     #            edged)
                     # cv2.waitKey(0)
-                    find_contours_and_draw_them(cv2.cvtColor(temp, cv2.COLOR_GRAY2BGR), edged,
-                                                f"Contours {blrCount}, auto_canny i: {i} j: {j}           sigma: [{sigma}] v: [{v}]")
+                    key = find_contours_and_draw_them(cv2.cvtColor(temp, cv2.COLOR_GRAY2BGR), edged,
+                                                      f"Contours {blrCount}, auto_canny i: {i} j: {j}           sigma: [{sigma}] v: [{v}]")
                     if key == KEY_ESC:
                         break
                     elif key == KEY_BACKSPACE:
                         break
-                    else:
-                        continue
             if key == KEY_ESC:
                 break
             elif key == KEY_BACKSPACE:
@@ -254,7 +256,6 @@ for n in range(5001):
             else:
                 continue
         blrCount += 1
-
 # blurs = [temp]
 # # perform edge detection, then perform a dilation + erosion to
 # # close gaps in between object
