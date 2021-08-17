@@ -10,6 +10,10 @@ KEY_ESC = 27
 KEY_SPACE = 32
 KEY_BACKSPACE = 8
 
+PHOTO_PATH = "grawer01/0_grawer01_0_max_Normal.jpg"
+REF_OBJ_SIZE_IN_INCH = 10.0
+PIXELS_PER_METRIC = None
+
 
 def midpoint(ptA, ptB):
     return (ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5
@@ -36,6 +40,35 @@ def increase_contrast(imgToContrast):
     # cv2.imshow('final', final)
     # _____END_____#
     return final
+
+
+# Find edges using canny edge detector
+def auto_canny(grayim, sigma=0.33, v=202):
+    # compute the median of the single channel pixel intensities
+    # v = np.median(grayim)  # 202.0
+    # v = np.float64(20)
+    # apply automatic Canny edge detection using the computed median
+    lower = int(max(0, (1.0 - sigma) * v))
+    upper = int(min(255, (1.0 + sigma) * v))
+    edged = cv2.Canny(grayim, lower, upper)
+    # return the edged image
+    return edged
+
+
+# Find edges using canny edge detector
+def auto_canny_default(grayim):
+    # compute the median of the single channel pixel intensities
+    # v = np.median(grayim)  # 202.0
+    sigma = 0.33
+    v = np.float64(20)
+    print(f"Before Canny Median {v}")
+    print(f"V is {type(v)}")
+    # apply automatic Canny edge detection using the computed median
+    lower = int(max(0, (1.0 - sigma) * v))
+    upper = int(min(255, (1.0 + sigma) * v))
+    edged = cv2.Canny(grayim, lower, upper)
+    # return the edged image
+    return edged
 
 
 def find_contours_and_draw_them(img, edged, window_name):
@@ -120,10 +153,7 @@ def find_contours_and_draw_them(img, edged, window_name):
     cv2.waitKey(0)
 
 
-PHOTO_PATH = "piasekSredni/0_piasekSredni_0_min_UV.jpg"
-REF_OBJ_SIZE_IN_INCH = 10.0
-PIXELS_PER_METRIC = None
-
+# START
 # STEP1 - Read image and define pixel size
 img = cv2.imread(PHOTO_PATH, cv2.IMREAD_COLOR)
 cv2.imshow("img", img)
@@ -146,7 +176,6 @@ cv2.waitKey(0)
 
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-
 # Step 2: Denoising, if required and threshold image
 
 # No need for any denoising or smoothing as the image looks good.
@@ -163,46 +192,21 @@ gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 # cv2.imshow("thershold", thresh)
 # cv2.waitKey(0)
 
-# Find edges using canny edge detector
-def auto_canny(grayim, sigma=0.33, v=202):
-    # compute the median of the single channel pixel intensities
-    # v = np.median(grayim)  # 202.0
-    # v = np.float64(20)
-    # apply automatic Canny edge detection using the computed median
-    lower = int(max(0, (1.0 - sigma) * v))
-    upper = int(min(255, (1.0 + sigma) * v))
-    edged = cv2.Canny(grayim, lower, upper)
-    # return the edged image
-    return edged
-
-
-# Find edges using canny edge detector
-def auto_canny_default(grayim):
-    # compute the median of the single channel pixel intensities
-    # v = np.median(grayim)  # 202.0
-    sigma = 0.33
-    v = np.float64(20)
-    print(f"Before Canny Median {v}")
-    print(f"V is {type(v)}")
-    # apply automatic Canny edge detection using the computed median
-    lower = int(max(0, (1.0 - sigma) * v))
-    upper = int(min(255, (1.0 + sigma) * v))
-    edged = cv2.Canny(grayim, lower, upper)
-    # return the edged image
-    return edged
-
 
 d = 4
 sigmaParam = 1
 cannySigma = 0.11
 cannyV = 30
 blurred = gray.copy()
-temp = cv2.bilateralFilter(gray.copy(), d, sigmaParam, sigmaParam)
-edged = auto_canny_default(temp)
+# temp = cv2.bilateralFilter(gray.copy(), d, sigmaParam, sigmaParam)
+# edged = auto_canny_default(temp)
 blrCount = 0
+# cv2.imshow(f"auto_canny_default", edged)
+# cv2.waitKey(0)
+temp = gray.copy()
 for n in range(5001):
     temp = cv2.bilateralFilter(temp.copy(), d, sigmaParam, sigmaParam)
-    if n % 25 == 0:
+    if n % 100 == 0:
         cv2.imshow(f"blur {n}", temp)
         cv2.waitKey(0)
         # contrast = increase_contrast(temp)
@@ -216,28 +220,33 @@ for n in range(5001):
         # cv2.imshow(f"Sharpened {n}", sharpened)
         # cv2.waitKey(0)
         key = None
-        for i in range(20):
-            for j in range(25):
-                edged = auto_canny(temp.copy(), i / 10, j * 10)
-                cv2.imshow(f"Blur {blrCount}, auto_canny i: {i} j: {j}           sigma: [{i / 10}] v: [{j * 10}]",
-                           edged)
-                key = cv2.waitKey(0)
-                edged = cv2.dilate(edged, None, iterations=1)
-                cv2.imshow(f"Dilated {blrCount}, auto_canny i: {i} j: {j}           sigma: [{i / 10}] v: [{j * 10}]",
-                           edged)
-                cv2.waitKey(0)
-                edged = cv2.erode(edged, None, iterations=1)
-                cv2.imshow(f"Eroded {blrCount}, auto_canny i: {i} j: {j}           sigma: [{i / 10}] v: [{j * 10}]",
-                           edged)
-                cv2.waitKey(0)
-                find_contours_and_draw_them(cv2.cvtColor(temp, cv2.COLOR_GRAY2BGR), edged,
-                                            f"Contours {blrCount}, auto_canny i: {i} j: {j}           sigma: [{i / 10}] v: [{j * 10}]")
-                if key == KEY_ESC:
-                    break
-                elif key == KEY_BACKSPACE:
-                    break
-                else:
-                    continue
+        for i in range(11):
+            for j in range(10):
+                print("i:", i)
+                print("j:", j)
+                if i > 2 and j > 2:
+                    sigma = i / 10
+                    v = j * 20
+                    edged = auto_canny(temp.copy(), sigma, v)
+                    # cv2.imshow(f"Blur {blrCount}, auto_canny i: {i} j: {j}           sigma: [{sigma}] v: [{v}]",
+                    #            edged)
+                    # key = cv2.waitKey(0)
+                    edged = cv2.dilate(edged, None, iterations=1)
+                    # cv2.imshow(f"Dilated {blrCount}, auto_canny i: {i} j: {j}           sigma: [{sigma}] v: [{v}]",
+                    #            edged)
+                    # cv2.waitKey(0)
+                    edged = cv2.erode(edged, None, iterations=1)
+                    # cv2.imshow(f"Eroded {blrCount}, auto_canny i: {i} j: {j}           sigma: [{sigma}] v: [{v}]",
+                    #            edged)
+                    # cv2.waitKey(0)
+                    find_contours_and_draw_them(cv2.cvtColor(temp, cv2.COLOR_GRAY2BGR), edged,
+                                                f"Contours {blrCount}, auto_canny i: {i} j: {j}           sigma: [{sigma}] v: [{v}]")
+                    if key == KEY_ESC:
+                        break
+                    elif key == KEY_BACKSPACE:
+                        break
+                    else:
+                        continue
             if key == KEY_ESC:
                 break
             elif key == KEY_BACKSPACE:
