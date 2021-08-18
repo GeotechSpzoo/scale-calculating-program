@@ -10,8 +10,11 @@ KEY_ESC = 27
 KEY_SPACE = 32
 KEY_BACKSPACE = 8
 
-PHOTO_PATH = "grawer01/0_grawer01_0_max_Normal.jpg"
-REF_OBJ_SIZE_IN_INCH = 10.0
+PHOTO_PATH = "str2/0_str2_0_max_Normal.jpg"
+ONE_INCH_IN_MILLIMETERS = 25.4
+ONE_MILLIMETER_IN_INCHES = 1 / 25.4
+REF_OBJ_SIZE_IN_MILLIMETERS = 0.1  # 0.1 mm = 0.003937 inch
+REF_OBJ_SIZE_IN_INCH = ONE_MILLIMETER_IN_INCHES * REF_OBJ_SIZE_IN_MILLIMETERS  # 0.1 mm = 0.003937 inch
 PIXELS_PER_METRIC = None
 
 
@@ -50,9 +53,9 @@ def auto_canny(grayim, sigma=0.33, v=202):
     # apply automatic Canny edge detection using the computed median
     lower = int(max(0, (1.0 - sigma) * v))
     upper = int(min(255, (1.0 + sigma) * v))
-    edged = cv2.Canny(grayim, lower, upper)
+    edgedd = cv2.Canny(grayim, lower, upper)
     # return the edged image
-    return edged
+    return edgedd
 
 
 # Find edges using canny edge detector
@@ -86,7 +89,7 @@ def find_contours_and_draw_them(img, edged, window_name):
     orig = img.copy()
     for c in cnts:
         # if the contour is not sufficiently large, ignore it
-        if cv2.contourArea(c) < 25:
+        if cv2.contourArea(c) < 255:
             continue
 
         # compute the rotated bounding box of the contour
@@ -214,9 +217,9 @@ for n in range(5001):
             break
         elif key == KEY_BACKSPACE:
             continue
-        # contrast = increase_contrast(temp)
-        # cv2.imshow(f"Contrast {n}", contrast)
-        # cv2.waitKey(0)
+        contrast = increase_contrast(temp)
+        cv2.imshow(f"Contrast {n}", contrast)
+        cv2.waitKey(0)
         # # Sharpen image
         # kernel = np.array([[-1.0, -1.1, -1.0],
         #                    [-1.0, 8.5, -1.0],
