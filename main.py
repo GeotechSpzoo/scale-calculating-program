@@ -6,6 +6,7 @@ import numpy as np
 import argparse
 import imutils
 import cv2
+import circle_detection_01
 
 
 def midpoint(ptA, ptB):
@@ -42,7 +43,7 @@ if __name__ == '__main__':
                     help="path to the input image")
     ap.add_argument("-w", "--width", type=float, required=True,
                     help="width of the left-most object in the image (in inches)")
-    argv = ["", "-w.00393701", "-i11-11_o1_0_min_UV.jpg"]
+    argv = ["", "-w.00393701", "-istr1/0_str1_0_max_Normal.jpg"]
     args = vars(ap.parse_args(argv[1:]))
 
     # load the image, convert it to grayscale, and blur it slightly
@@ -67,6 +68,7 @@ if __name__ == '__main__':
     edged = cv2.Canny(gray, 27, 369)
     cv2.imshow("Edged", edged)
     cv2.waitKey(0)
+    circle_detection_01.detect_circles(gray, image)
     # edged = cv2.dilate(edged, None, iterations=1)
     # cv2.imshow("Dilated", edged)
     # cv2.waitKey(0)

@@ -217,9 +217,9 @@ for n in range(5001):
             break
         elif key == KEY_BACKSPACE:
             continue
-        contrast = increase_contrast(temp)
-        cv2.imshow(f"Contrast {n}", contrast)
-        cv2.waitKey(0)
+        # contrast = increase_contrast(temp)
+        # cv2.imshow(f"Contrast {n}", contrast)
+        # cv2.waitKey(0)
         # # Sharpen image
         # kernel = np.array([[-1.0, -1.1, -1.0],
         #                    [-1.0, 8.5, -1.0],
