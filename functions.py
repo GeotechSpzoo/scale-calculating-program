@@ -9,7 +9,6 @@ KEY_ESC = 27
 KEY_SPACE = 32
 KEY_BACKSPACE = 8
 
-PHOTO_PATH = "str2/0_str2_0_max_Normal.jpg"
 ONE_INCH_IN_MILLIMETERS = 25.4
 ONE_MILLIMETER_IN_INCHES = 1 / 25.4
 REF_OBJ_SIZE_IN_MILLIMETERS = 0.1  # 0.1 mm = 0.003937 inch
@@ -46,7 +45,7 @@ def sharpen(img):
     kernel = np.array([[-1.1, -1.1, -1.1],
                        [-1.1, 9.8, -1.1],
                        [-1.1, -1.1, -1.1]])
-    sharpened = cv2.filter2D(img, -1, kernel)  # applying the sharpening kernel to the input image & displaying it.
+    sharpened = cv2.filter2D(img, -1, kernel)  # Applying the sharpening kernel to the input image.
     cv2.imshow("sharpen", sharpened)
     cv2.waitKey(0)
     return sharpened
@@ -70,28 +69,46 @@ def blur_gaussian(gray):
     return blurred
 
 
-def blur_bilateral_filter(gray):
+def blur_bilateral_filter(gray, d, sigma):
     d = 4
     sigma = 1
-    blurred = cv2.bilateralFilter(gray.copy(), d, sigma, sigma)
-    cv2.imshow(f"blur_bilateral_filter d: {d}, sigma: {sigma}", gray)
+    window_name = f"blur_bilateral_filter d: {d}, sigma: {sigma}"
+    blurred = cv2.bilateralFilter(gray, d, sigma, sigma)
+    cv2.imshow(window_name, blurred)
     cv2.waitKey(0)
     return blurred
 
 
+def blur_bilateral_filter_min(gray, wait=False):
+    d = 4
+    sigma = 11
+    window_name = f"blur_bilateral_filter d: {d}, sigma: {sigma}"
+    blurred = cv2.bilateralFilter(gray, d, sigma, sigma)
+    cv2.imshow(window_name, blurred)
+    if wait:
+        cv2.waitKey(0)
+    return blurred
+
+
 def load_image(photo_path):
-    loaded = cv2.imread(PHOTO_PATH, cv2.IMREAD_COLOR)
+    loaded = cv2.imread(photo_path, cv2.IMREAD_COLOR)
     cv2.imshow(f"load_image path:{photo_path}", loaded)
     cv2.waitKey(0)
     return loaded
 
 
-def rgb_to_gray(img):
-    pass
+def bgr_to_gray(bgr_img):
+    gray = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2GRAY)
+    cv2.imshow("bgr_to_gray", gray)
+    cv2.waitKey(0)
+    return gray
 
 
-def gray_to_rgb(img):
-    pass
+def gray_to_bgr(gray):
+    bgr = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    cv2.imshow("gray_to_bgr", bgr)
+    cv2.waitKey(0)
+    return bgr
 
 
 # Find edges using canny edge detector
@@ -137,23 +154,23 @@ def midpoint(ptA, ptB):
 def find_contours_and_draw_them(img, edged, window_name):
     global PIXELS_PER_METRIC
     # find contours in the edge map
-    # cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL,
+    # cnts = cv2.findContours(edged, cv2.RETR_EXTERNAL,
     #                         cv2.CHAIN_APPROX_SIMPLE)
-    cnts = cv2.findContours(edged.copy(), cv2.RETR_LIST,
+    cnts = cv2.findContours(edged, cv2.RETR_LIST,
                             cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     # sort the contours from left-to-right and initialize the
     # 'pixels per metric' calibration variable
     (cnts, _) = contours.sort_contours(cnts)
     # loop over the contours individually
-    orig = img.copy()
+    orig = img
     for c in cnts:
         # if the contour is not sufficiently large, ignore it
         if cv2.contourArea(c) < 255:
             continue
 
         # compute the rotated bounding box of the contour
-        # orig = cv2.cvtColor(edged.copy(), cv2.COLOR_GRAY2BGR)
+        # orig = cv2.cvtColor(edged, cv2.COLOR_GRAY2BGR)
         box = cv2.minAreaRect(c)
         box = cv2.cv.BoxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
         box = np.array(box, dtype="int")
@@ -214,3 +231,35 @@ def find_contours_and_draw_them(img, edged, window_name):
         # show the output image
     cv2.imshow(window_name, orig)
     return cv2.waitKey(0)
+
+
+def detect_circles(gray, orig):
+    # construct the argument parser and parse the arguments
+    # ap = argparse.ArgumentParser()
+    # ap.add_argument("-i", "--image", required=True, help="Path to the image")
+    # argv = ["", "-istr1/0_str1_0_max_Normal.jpg"]
+    # args = vars(ap.parse_args(argv[1:]))
+    # # load the image, clone it for output, and then convert it to grayscale
+    # image = cv2.imread(args["image"])
+    # output = image
+    # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # detect circles in the image
+    # cv2.HoughCircles(image, method, dp, minDist, circles=None, param1=None, param2=None, minRadius=None, maxRadius=None)
+    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1.2, 200)
+    # ensure at least some circles were found
+    # for i in range(11):
+    if circles is not None:
+        # convert the (x, y) coordinates and radius of the circles to integers
+        circles = np.round(circles[0, :]).astype("int")
+        # loop over the (x, y) coordinates and radius of the circles
+        for (x, y, r) in circles:
+            # draw the circle in the output image, then draw a rectangle
+            # corresponding to the center of the circle
+            cv2.circle(orig, (x, y), r, (0, 255, 0), 4)
+            cv2.rectangle(orig, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
+        # show the output image
+        # cv2.imshow("orig", np.hstack([gray, orig]))
+        cv2.imshow(f"detect_circles amount: {circles.size}", orig)
+    else:
+        cv2.imshow(f"detect_circles NO CIRCLES DETECTED", orig)
+    cv2.waitKey(0)
