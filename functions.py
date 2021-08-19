@@ -35,7 +35,8 @@ def increase_contrast_clahe(img):
     # cv2.imshow('limg', limg)
     # -----Converting image from LAB Color model to RGB model--------------------
     final = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
-    cv2.imshow('increase_contrast', final)
+    cv2.imshow("increase_contrast_clahe", final)
+    cv2.waitKey(0)
     # _____END_____#
     return final
 
@@ -46,7 +47,7 @@ def sharpen(img):
                        [-1.1, 9.8, -1.1],
                        [-1.1, -1.1, -1.1]])
     sharpened = cv2.filter2D(img, -1, kernel)  # applying the sharpening kernel to the input image & displaying it.
-    cv2.imshow('sharpen', sharpened)
+    cv2.imshow("sharpen", sharpened)
     cv2.waitKey(0)
     return sharpened
 
@@ -54,14 +55,17 @@ def sharpen(img):
 def gray_to_binary(gray):
     # Change the grey image to binary by thresholding.
     thresholded = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    cv2.imshow(f"gray_to_binary", thresholded)
+    cv2.imshow("gray_to_binary", thresholded)
     cv2.waitKey(0)
     return thresholded
 
 
 def blur_gaussian(gray):
-    blurred = cv2.GaussianBlur(gray, (7, 7), 0)
-    cv2.imshow("ImageGrayBlur", gray)
+    k_size = (7, 7)
+    sigma = 0
+    # GaussianBlur(src, k_size, sigmaX, dst=None, sigmaY=None, borderType=None)
+    blurred = cv2.GaussianBlur(gray, k_size, sigma)
+    cv2.imshow(f"blur_gaussian k_size: {k_size}, sigma: {sigma}", gray)
     cv2.waitKey(0)
     return blurred
 
@@ -70,7 +74,16 @@ def blur_bilateral_filter(gray):
     d = 4
     sigma = 1
     blurred = cv2.bilateralFilter(gray.copy(), d, sigma, sigma)
+    cv2.imshow(f"blur_bilateral_filter d: {d}, sigma: {sigma}", gray)
+    cv2.waitKey(0)
     return blurred
+
+
+def load_image(photo_path):
+    loaded = cv2.imread(PHOTO_PATH, cv2.IMREAD_COLOR)
+    cv2.imshow(f"load_image path:{photo_path}", loaded)
+    cv2.waitKey(0)
+    return loaded
 
 
 def rgb_to_gray(img):
