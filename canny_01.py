@@ -15,7 +15,7 @@ ONE_INCH_IN_MILLIMETERS = 25.4
 ONE_MILLIMETER_IN_INCHES = 1 / 25.4
 REF_OBJ_SIZE_IN_MILLIMETERS = 0.1  # 0.1 mm = 0.003937 inch
 REF_OBJ_SIZE_IN_INCH = ONE_MILLIMETER_IN_INCHES * REF_OBJ_SIZE_IN_MILLIMETERS  # 0.1 mm = 0.003937 inch
-PIXELS_PER_METRIC = None
+PIXELS_PER_MILLIMETER = None
 
 
 def midpoint(ptA, ptB):
@@ -75,7 +75,7 @@ def auto_canny_default(grayim):
 
 
 def find_contours_and_draw_them(img, edged, window_name):
-    global PIXELS_PER_METRIC
+    global PIXELS_PER_MILLIMETER
     # find contours in the edge map
     # cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL,
     #                         cv2.CHAIN_APPROX_SIMPLE)
