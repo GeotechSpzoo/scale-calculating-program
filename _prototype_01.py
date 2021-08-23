@@ -1,9 +1,10 @@
 import functions as f
+import numpy as np
 from os import walk
 
-MAX_SIZE_MAX_ZOOM = 108
-
 MIN_SIZE_MAX_ZOOM = 83
+
+MAX_SIZE_MAX_ZOOM = 108
 
 
 def find_ref_object(path_to_image):
@@ -42,7 +43,11 @@ for file_name in file_names:
 
 print(f"min_scale_factor: 1 mm = {min_scale_factor} px")
 print(f"max_scale_factor: 1 mm = {max_scale_factor} px")
-print(f"average_scale_factor: 1 mm = {scale_factor_sum / iterations} px")
-scale_deviation = max_scale_factor / min_scale_factor
-print(f"scale deviation: {scale_deviation - 1}")
+average_scale_factor = scale_factor_sum / iterations
+print(f"average_scale_factor: 1 mm = {average_scale_factor} px")
+max_min_deviation = max_scale_factor / min_scale_factor - 1
+print(f"max_min_deviation: {max_min_deviation * 100} %")
+mean_deviation = np.max(
+    [np.abs(average_scale_factor - min_scale_factor), np.abs(average_scale_factor - max_scale_factor)])
+print(f"mean_deviation: {mean_deviation / average_scale_factor * 100} %")
 # find_ref_object("testAlgo1/0_testAlgo1_0_min_Normal.jpg")

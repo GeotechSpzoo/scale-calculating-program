@@ -211,7 +211,9 @@ def find_contours_and_draw_them(img, edged, window_name, min_size, max_size, sho
         (box_size_x, box_size_y) = box_size(box)
         area = box_area(box)
         print("area:", area)
-        size_for_scale_calculation = np.minimum(box_size_x, box_size_y)
+        # calculate factor form minimum size or from mean of both sizes
+        # size_for_scale_calculation = np.min([box_size_x, box_size_y])
+        size_for_scale_calculation = np.mean([box_size_x, box_size_y])
         print("size_for_scale_calculation:", size_for_scale_calculation)
         # noinspection PyUnresolvedReferences
         box = cv2.cv.BoxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
@@ -246,7 +248,7 @@ def find_contours_and_draw_them(img, edged, window_name, min_size, max_size, sho
                 break
     cv2.imshow(f"{window_name} min_size = {min_size}", orig)
     cv2.waitKey(0)
-    return pixels_per_millimeter
+    return pixels_per_millimeter  # todo możnaby liczyć średnią z dwuch boków do skali
 
 
 def draw_box(box, orig):
