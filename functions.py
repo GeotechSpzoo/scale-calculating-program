@@ -51,15 +51,6 @@ def sharpen(img):
     return sharpened
 
 
-def gray_to_binary(gray):
-    # Change the grey image to binary by thresholding.
-    thresholded = gray
-    cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU, thresholded)
-    cv2.imshow("gray_to_binary", thresholded)
-    cv2.waitKey(0)
-    return thresholded
-
-
 def gray_to_binary(gray, tresh):
     ret, thresholded = cv2.threshold(gray, tresh, 255, cv2.THRESH_BINARY)
     cv2.imshow(f"gray_to_binary tresh: {tresh}", thresholded)
@@ -120,6 +111,7 @@ def gray_to_bgr(gray):
 
 
 # Find edges using canny edge detector
+# noinspection PyTypeChecker
 def detect_edges_sigma_v(gray_img, sigma=0.33, v=202):
     # compute the median of the single channel pixel intensities
     # v = np.median(grayim)  # 202.0
@@ -190,7 +182,8 @@ def find_contours_and_draw_them(img, edged, window_name, min_size):
             # orig = cv2.cvtColor(edged, cv2.COLOR_GRAY2BGR)
             box = cv2.minAreaRect(c)
             print("minAreaRect:", box)
-            cv2.waitKey(0)
+            # cv2.waitKey(0)
+            # noinspection PyUnresolvedReferences
             box = cv2.cv.BoxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
             box = np.array(box, dtype="int")
 
@@ -240,7 +233,7 @@ def find_contours_and_draw_them(img, edged, window_name, min_size):
             if PIXELS_PER_MILLIMETER is None:
                 # PIXELS_PER_METRIC = dB / REF_OBJ_SIZE_IN_INCH
                 PIXELS_PER_MILLIMETER = dB / REF_OBJ_SIZE_IN_MILLIMETERS
-                print(f"REF_OBJ_CONTOUR = {c}")
+                # print(f"REF_OBJ_CONTOUR = {c}")
                 print(f"REF_OBJ_BOX = {box}")
                 print(f"PHOTO_SCALE: 1 mm = {'{:.2f}'.format(PIXELS_PER_MILLIMETER)} px")
             # compute the size of the object
@@ -263,7 +256,7 @@ def find_contours_and_draw_them(img, edged, window_name, min_size):
                         (0, 255, 127),
                         1)
             # show the output image
-            cv2.imshow(f"{window_name} min_size = {min_size}", orig)
+    cv2.imshow(f"{window_name} min_size = {min_size}", orig)
     return cv2.waitKey(0)
 
 

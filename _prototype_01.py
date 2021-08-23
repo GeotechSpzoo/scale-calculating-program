@@ -2,7 +2,9 @@ import cv2
 
 import functions as f
 
-img = f.load_image("sprey1/sprey2_dot100.jpg")
+# img = f.load_image("sprey1/sprey1_dot100.jpg")
+# img = f.load_image("sprey1/sprey2_dot100.jpg")
+img = f.load_image("str1/0_str1_0_max_Normal.jpg")
 # contrasted = f.contrast_increase_clahe(img)
 # for i in range(1):
 #     contrasted = f.contrast_increase_clahe(contrasted)
@@ -14,8 +16,8 @@ cv2.waitKey(0)
 # for i in range(255):
 #     binary = f.gray_to_binary(blurred, i)
 # cv2.waitKey(0)
-binary = f.gray_to_binary(blurred, 77)
+binary = f.gray_to_binary(blurred, 78)
 edged = f.detect_edges_raw_canny(binary, 25, 100)
-eroded = f.erode_dilate(edged)
-f.find_contours_and_draw_them(f.gray_to_bgr(gray), eroded, "window name", 69)
+# eroded = f.erode_dilate(edged)
+f.find_contours_and_draw_them(f.gray_to_bgr(gray), edged, "REF OBJECTS FOUND", 69)
 cv2.waitKey(0)
