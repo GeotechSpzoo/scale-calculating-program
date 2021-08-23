@@ -245,7 +245,8 @@ def find_contours_and_draw_them(img, edged, window_name, min_size, max_size, sho
             if not show_all:
                 break
     cv2.imshow(f"{window_name} min_size = {min_size}", orig)
-    return cv2.waitKey(0)
+    cv2.waitKey(0)
+    return pixels_per_millimeter
 
 
 def draw_box(box, orig):
