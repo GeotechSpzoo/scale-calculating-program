@@ -18,6 +18,8 @@ def find_ref_object(path_to_image):
 scale_factor = 0
 min_scale_factor = 99999999999999.0
 max_scale_factor = 0.0
+scale_factor_sum = 0.0
+iterations = 0
 
 # iterate through photos
 pathToPhotos = "testAlgo1/"
@@ -26,13 +28,16 @@ for file_name in file_names:
     scale_factor = find_ref_object(pathToPhotos + file_name)
     # find minimum and max scale_factor
     if scale_factor is not None:
+        scale_factor_sum += scale_factor
+        iterations += 1
         if scale_factor > max_scale_factor:
             max_scale_factor = scale_factor
         if scale_factor < min_scale_factor:
             min_scale_factor = scale_factor
 
-print(f"min_scale_factor: {min_scale_factor}")
-print(f"max_scale_factor: {max_scale_factor}")
+print(f"min_scale_factor: 1 mm = {min_scale_factor} px")
+print(f"max_scale_factor: 1 mm = {max_scale_factor} px")
+print(f"average_scale_factor: 1 mm = {scale_factor_sum / iterations} px")
 scale_deviation = max_scale_factor / min_scale_factor
 print(f"scale deviation: {scale_deviation - 1}")
 # find_ref_object("testAlgo1/0_testAlgo1_0_min_Normal.jpg")
