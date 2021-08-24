@@ -9,13 +9,18 @@ KEY_ESC = 27
 KEY_SPACE = 32
 KEY_BACKSPACE = 8
 
-# ONE_INCH_IN_MILLIMETERS = 25.4
-# ONE_MILLIMETER_IN_INCHES = 1 / 25.4
-REF_OBJ_SIZE_IN_MILLIMETERS = 0.1  # 0.1 mm = 0.003937 inch
+REF_OBJ_SIZE_IN_MILLIMETERS = 0.1
 
+PHOTO_WIDTH_PIXELS = 1280
+PHOTO_HEIGHT_PIXELS = 1024
 
-# REF_OBJ_SIZE_IN_INCH = ONE_MILLIMETER_IN_INCHES * REF_OBJ_SIZE_IN_MILLIMETERS  # 0.1 mm = 0.003937 inch
-# PIXELS_PER_MILLIMETER = None
+ZOOM_IN_MILLIMETER_IN_PIXELS = 706  # 1mm = 706px
+ZOOM_IN_WIDTH_MILLIMETERS = PHOTO_WIDTH_PIXELS / ZOOM_IN_MILLIMETER_IN_PIXELS  # = 1,81 mm
+ZOOM_IN_HEIGHT_MILLIMETERS = PHOTO_HEIGHT_PIXELS / ZOOM_IN_MILLIMETER_IN_PIXELS  # = 1,45 mm
+
+ZOOM_OUT_MILLIMETER_IN_PIXELS = 100  # 1mm = 100px
+ZOOM_OUT_WIDTH_MILLIMETERS = PHOTO_WIDTH_PIXELS / ZOOM_OUT_MILLIMETER_IN_PIXELS  # = 12,8 mm
+ZOOM_OUT_HEIGHT_MILLIMETERS = PHOTO_HEIGHT_PIXELS / ZOOM_OUT_MILLIMETER_IN_PIXELS  # = 10,24 mm
 
 
 def contrast_increase_clahe(img, wait=False):
@@ -211,7 +216,7 @@ def find_contours_and_draw_them(img, edged, window_name, min_size, max_size, sho
         (box_size_x, box_size_y) = box_size(box)
         area = box_area(box)
         print("area:", area)
-        # calculate factor form minimum size or from mean of both sizes
+        # calculate scale factor form minimum size or from mean of both sizes
         # size_for_scale_calculation = np.min([box_size_x, box_size_y])
         size_for_scale_calculation = np.mean([box_size_x, box_size_y])
         print("size_for_scale_calculation:", size_for_scale_calculation)
@@ -246,9 +251,9 @@ def find_contours_and_draw_them(img, edged, window_name, min_size, max_size, sho
                 cv2.waitKey(0)
             if not show_all:
                 break
-    cv2.imshow(f"{window_name} min_size = {min_size}", orig)
+    cv2.imshow(f"{window_name} min_size = {min_size}, max_size = {max_size}", orig)
     cv2.waitKey(0)
-    return pixels_per_millimeter  # todo możnaby liczyć średnią z dwuch boków do skali
+    return pixels_per_millimeter
 
 
 def draw_box(box, orig):

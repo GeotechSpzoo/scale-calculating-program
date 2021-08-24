@@ -2,9 +2,9 @@ import functions as f
 import numpy as np
 from os import walk
 
-MIN_SIZE_MAX_ZOOM = 83
+MIN_SIZE_ZOOM_IN = 83
 
-MAX_SIZE_MAX_ZOOM = 108
+MAX_SIZE_ZOOM_IN = 108
 
 
 def find_ref_object(path_to_image):
@@ -17,8 +17,8 @@ def find_ref_object(path_to_image):
     binary = f.gray_to_binary(blurred, 77)
     edged = f.detect_edges_raw_canny(binary, 25, 100)
     # eroded = f.erode_dilate(edged)
-    return f.find_contours_and_draw_them(f.gray_to_bgr(gray), edged, path_to_image, MIN_SIZE_MAX_ZOOM,
-                                         MAX_SIZE_MAX_ZOOM)
+    return f.find_contours_and_draw_them(f.gray_to_bgr(gray), edged, path_to_image, MIN_SIZE_ZOOM_IN,
+                                         MAX_SIZE_ZOOM_IN)
 
 
 scale_factor = 0
