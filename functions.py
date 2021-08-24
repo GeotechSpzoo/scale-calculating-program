@@ -1,6 +1,6 @@
 from scipy.spatial import distance as dist
 from imutils import perspective
-from imutils import contours
+from imutils import contours as cont
 import numpy as np
 import imutils
 import cv2
@@ -205,7 +205,7 @@ def find_contours_and_draw_them(img, edged, window_name, min_size, max_size, sho
     cnts = imutils.grab_contours(cnts)
     # sort the contours from left-to-right and initialize the
     # 'pixels per metric' calibration variable
-    (cnts, _) = contours.sort_contours(cnts)
+    (cnts, _) = cont.sort_contours(cnts)
     # loop over the contours individually
     orig = img
     for c in cnts:
@@ -221,9 +221,9 @@ def find_contours_and_draw_them(img, edged, window_name, min_size, max_size, sho
         size_for_scale_calculation = np.mean([box_size_x, box_size_y])
         print("size_for_scale_calculation:", size_for_scale_calculation)
         # noinspection PyUnresolvedReferences
-        box = cv2.cv.BoxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
-        box = np.array(box, dtype="int")
-        print("box vertexes:", box)
+        # box = cv2.cv.BoxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
+        # box = np.array(box, dtype="int")
+        # print("box vertexes:", box)
         is_appropriate_size = min_size < box_size_x < max_size and min_size < box_size_y < max_size
         if pixels_per_millimeter is None:
             if is_appropriate_size:
@@ -237,11 +237,10 @@ def find_contours_and_draw_them(img, edged, window_name, min_size, max_size, sho
             # in top-left, top-right, bottom-right, and bottom-left
             # order, then draw the outline of the rotated bounding
             # box
-            box = perspective.order_points(box)
+            # box = perspective.order_points(box)
             draw_contour(c, orig)
-            draw_box(box, orig)
-            draw_corners(box, orig)
-            draw_area(area, box_center_x, box_center_y, orig)
+            draw_box_with_corners(box, orig)
+            draw_area(box, orig)
             if pixels_per_millimeter is None:
                 draw_no_scale(orig, box_center_x, box_center_y)
             else:
@@ -256,15 +255,47 @@ def find_contours_and_draw_them(img, edged, window_name, min_size, max_size, sho
     return pixels_per_millimeter
 
 
-def draw_box(box, orig):
+def draw_box_with_corners(box, orig):
     # draw box contour
+    box = get_box_corner_points(box)
     cv2.drawContours(orig, [box.astype("int")], -1, (0, 255, 0), 1)
+    draw_corners(box, orig)
+
+
+def get_box_corner_points(box):
+    # noinspection PyUnresolvedReferences
+    box = cv2.cv.BoxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
+    box = np.array(box, dtype="int")
+    box = perspective.order_points(box)
+    return box
+
+
+def draw_boxes(boxes, orig):
+    for box in boxes:
+        draw_box_with_corners(box, orig)
 
 
 def draw_contour(c, orig):
     # draw contour points
-    for [[x, y]] in c:
-        cv2.circle(orig, (int(x), int(y)), 1, (0, 127, 255), -1)
+    cv2.drawContours(orig, [c], -1, (0, 127, 255), 1)
+
+
+def draw_contours(contours_list, orig):
+    for c in contours_list:
+        cv2.drawContours(orig, [c], -1, (0, 127, 255), 1)
+
+
+def draw_contours_with_label(contours_list, orig):
+    # draw contour points
+    i = 0
+    for c in contours_list:
+        # draw the contour and label number on the image
+        cv2.drawContours(orig, [c], -1, (0, 127, 255), 1)
+        box = cv2.minAreaRect(c)
+        (c_x, c_y) = box_center(box)
+        cv2.putText(orig, "#{}".format(i + 1), (int(c_x), int(c_y)), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.3, (255, 255, 255), 1)
+        i += 1
 
 
 def draw_corners(box, orig):
@@ -277,6 +308,7 @@ def draw_dimensions(box, orig, pixels_per_millimeter):
     # unpack the ordered bounding box, then compute the midpoint
     # between the top-left and top-right coordinates, followed by
     # the midpoint between bottom-left and bottom-right coordinates
+    box = get_box_corner_points(box)
     (tl, tr, br, bl) = box
     (tltrX, tltrY) = midpoint(tl, tr)
     (blbrX, blbrY) = midpoint(bl, br)
@@ -319,24 +351,26 @@ def draw_object_size(pixels_per_millimeter, dA, dB, orig, tltrX, tltrY, trbrX, t
                 (int(trbrX + 10), int(trbrY)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.4,
-                (0, 255, 127),
+                (0, 255, 0),
                 1)
     cv2.putText(orig,
                 "{:.2f} mm".format(dimB),
                 (int(tltrX - 15), int(tltrY - 10)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.4,
-                (0, 255, 127),
+                (0, 255, 0),
                 1)
 
 
-def draw_area(area, box_center_x, box_center_y, orig):
+def draw_area(box, orig):
+    (box_center_x, box_center_y) = box_center(box)
+    area = box_area(box)
     cv2.putText(orig,
                 "{:.0f}px2".format(area),
                 (int(box_center_x), int(box_center_y)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.4,
-                (0, 0, 0),
+                (255, 255, 255),
                 1)
 
 
@@ -370,3 +404,62 @@ def detect_circles(gray, orig):
     else:
         cv2.imshow(f"detect_circles NO CIRCLES DETECTED", orig)
     cv2.waitKey(0)
+
+
+def find_contours(binary_img, window_name, sort="top-to-bottom", wait=False):
+    contours_list = cv2.findContours(binary_img, cv2.RETR_LIST,
+                                     cv2.CHAIN_APPROX_TC89_L1)
+    contours_list = imutils.grab_contours(contours_list)
+    (contours_list, _) = cont.sort_contours(contours_list, method=sort)
+    if wait:
+        orig = gray_to_bgr(binary_img)
+        draw_contours_with_label(contours_list, orig)
+        cv2.imshow(f"find_contours in {window_name}", orig)
+        cv2.waitKey(0)
+    return contours_list
+
+
+def convert_contours_to_min_rect(contours_list, gray, window_name, wait=False):
+    boxes = []
+    for c in contours_list:
+        boxes.append(cv2.minAreaRect(c))
+    if wait:
+        orig = gray_to_bgr(gray)
+        draw_boxes(boxes, orig)
+        cv2.imshow(f"convert_contours_to_min_rect in {window_name}", orig)
+        cv2.waitKey(0)
+    return boxes
+
+
+def filter_boxes_by_size(boxes, min_size_px, max_size_px, gray, window_name, wait=False):
+    filtered_boxes = []
+    for box in boxes:
+        (box_size_x, box_size_y) = box_size(box)
+        if min_size_px < box_size_x < max_size_px and min_size_px < box_size_y < max_size_px:
+            filtered_boxes.append(box)
+    if wait:
+        orig = gray_to_bgr(gray)
+        draw_boxes(filtered_boxes, orig)
+        cv2.imshow(f"filter_boxes_by_size in {window_name}", orig)
+        cv2.waitKey(0)
+    return filtered_boxes
+
+
+def find_ref_dots(filtered_boxes, min_px_distance_between_dots, gray, window_name, wait=False):
+    dot1 = None
+    dot2 = None
+    for box in filtered_boxes:
+        if dot1 is None:
+            dot1 = box
+        else:
+            (dot1_x, dot1_y) = box_center(dot1)
+            (x, y) = box_center(box)
+            if np.abs(dot1_x - x) > min_px_distance_between_dots:
+                dot2 = box
+                break
+    if wait:
+        orig = gray_to_bgr(gray)
+        draw_boxes([dot1, dot2], orig)
+        cv2.imshow(f"find_ref_dots in {window_name}", orig)
+        cv2.waitKey(0)
+    return [dot1, dot2]
