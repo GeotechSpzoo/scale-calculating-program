@@ -14,6 +14,10 @@ REF_OBJ_SIZE_IN_MILLIMETERS = 0.1
 PHOTO_WIDTH_PIXELS = 1280
 PHOTO_HEIGHT_PIXELS = 1024
 
+TWO_DOTS_PX_MIN_DIST = 500  # 1mm = 706px
+
+ZOOM_IN_OUT_FACTOR = 7  # more precise = 7,067
+
 ZOOM_IN_MILLIMETER_IN_PIXELS = 706  # 1mm = 706px
 ZOOM_IN_WIDTH_MILLIMETERS = PHOTO_WIDTH_PIXELS / ZOOM_IN_MILLIMETER_IN_PIXELS  # = 1,81 mm
 ZOOM_IN_HEIGHT_MILLIMETERS = PHOTO_HEIGHT_PIXELS / ZOOM_IN_MILLIMETER_IN_PIXELS  # = 1,45 mm
@@ -257,12 +261,12 @@ def find_contours_and_draw_them(img, edged, window_name, min_size, max_size, sho
 
 def draw_box_with_corners(box, orig):
     # draw box contour
-    box = get_box_corner_points(box)
+    box = box_corner_points(box)
     cv2.drawContours(orig, [box.astype("int")], -1, (0, 255, 0), 1)
     draw_corners(box, orig)
 
 
-def get_box_corner_points(box):
+def box_corner_points(box):
     # noinspection PyUnresolvedReferences
     box = cv2.cv.BoxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
     box = np.array(box, dtype="int")
@@ -308,7 +312,7 @@ def draw_dimensions(box, orig, pixels_per_millimeter):
     # unpack the ordered bounding box, then compute the midpoint
     # between the top-left and top-right coordinates, followed by
     # the midpoint between bottom-left and bottom-right coordinates
-    box = get_box_corner_points(box)
+    box = box_corner_points(box)
     (tl, tr, br, bl) = box
     (tltrX, tltrY) = midpoint(tl, tr)
     (blbrX, blbrY) = midpoint(bl, br)
@@ -445,21 +449,86 @@ def filter_boxes_by_size(boxes, min_size_px, max_size_px, gray, window_name, wai
     return filtered_boxes
 
 
+def draw_text_info(orig, text):
+    height, width = orig.shape[:2]
+    cv2.putText(orig,
+                text,
+                (int(width / 4), int(height / 2)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1.0,
+                (0, 0, 255),
+                3)
+
+
 def find_ref_dots(filtered_boxes, min_px_distance_between_dots, gray, window_name, wait=False):
-    dot1 = None
-    dot2 = None
+    calibration_dot1 = None
+    calibration_dot2 = None
     for box in filtered_boxes:
-        if dot1 is None:
-            dot1 = box
+        if calibration_dot1 is None:
+            calibration_dot1 = box
         else:
-            (dot1_x, dot1_y) = box_center(dot1)
+            (dot1_x, dot1_y) = box_center(calibration_dot1)
             (x, y) = box_center(box)
+            # todo center y (vertical) should be smaller than ~200 px from top
+            # todo first dot x (horizontal) should be smaller than ~200 px from top
+            # todo second dot x (horizontal) should be greater than (photo_width - 200 px)
             if np.abs(dot1_x - x) > min_px_distance_between_dots:
-                dot2 = box
+                calibration_dot2 = box
                 break
-    if wait:
-        orig = gray_to_bgr(gray)
-        draw_boxes([dot1, dot2], orig)
+    orig = gray_to_bgr(gray)
+    draw_boxes([calibration_dot1, calibration_dot2], orig)
+    if calibration_dot1 is None:
+        draw_text_info(orig, "NO CALIBRATION DOTS FOUND")
         cv2.imshow(f"find_ref_dots in {window_name}", orig)
         cv2.waitKey(0)
-    return [dot1, dot2]
+    elif calibration_dot2 is None:
+        draw_text_info(orig, "CANT FIND SECOND CALIBRATION DOT")
+        cv2.imshow(f"find_ref_dots in {window_name}", orig)
+        cv2.waitKey(0)
+    else:
+        if wait:
+            cv2.imshow(f"find_ref_dots in {window_name}", orig)
+            cv2.waitKey(0)
+    print("calibration_dot1:", calibration_dot1)
+    print("calibration_dot2:", calibration_dot2)
+    return calibration_dot1, calibration_dot2
+
+
+def draw_line_with_label(orig, line, label_above, label_under):
+    dot1_center = line[0]
+    dot2_center = line[1]
+    mid_x, mid_y = midpoint(dot1_center, dot2_center)
+    cv2.line(orig, (int(dot1_center[0]), int(dot1_center[1])), (int(dot2_center[0]), int(dot2_center[1])),
+             (0, 255, 0), 2)
+    cv2.putText(orig,
+                label_above,
+                (int(mid_x - 15), int(mid_y - 10)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 127, 255),
+                2)
+    cv2.putText(orig,
+                label_under,
+                (int(mid_x - 15), int(mid_y + 30)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 127, 255),
+                2)
+
+
+def calculate_scale(dot1, dot2, ref_dist, gray, window_name, wait=False):
+    dot1_center = box_center(dot1)
+    dot2_center = box_center(dot2)
+    line = (dot1_center, dot2_center)
+    line_length = dist.euclidean(dot1_center, dot2_center)
+    scale = line_length / ref_dist
+    label_above = "calculate_scale 1 mm = {:.2f} px".format(scale)
+    print(label_above)
+    print(f"calculate_scale 100 px = {100 / scale} mm")
+    label_under = "line length = {:.2f} px = ".format(line_length) + "{:.2f} mm".format(line_length / scale)
+    if wait:
+        orig = gray_to_bgr(gray)
+        draw_line_with_label(orig, line, label_above, label_under)
+        cv2.imshow(f"find_ref_dots in {window_name}", orig)
+        cv2.waitKey(0)
+    return scale
