@@ -4,6 +4,7 @@ from imutils import contours as cont
 import numpy as np
 import imutils
 import cv2
+import os
 
 KEY_ESC = 27
 KEY_SPACE = 32
@@ -549,7 +550,7 @@ RULER_LINE_LENGTH_LONG = 40
 RULER_LINE_LENGTH_NORMAL = 30
 RULER_LINE_LENGTH_SHORT = 20
 
-RULER_LINE_COLOR = (0, 255, 0)
+RULER_LINE_COLOR = (0, 0, 0)
 RULER_LABEL_COLOR = (255, 255, 255)
 RULER_LABEL_SIZE = 0.5
 RULER_LABEL_THICKNESS = 2
@@ -598,15 +599,18 @@ def draw_rulers_with_labels(img, one_mm_in_px, width):
 
 
 def draw_rulers(img, scale_one_mm_in_px, window_name, wait=True):
-    # todo impl
     height, width, = image_resolution(img)
-    draw_rulers_with_labels(img, scale_one_mm_in_px, width)
+    draw_rulers_with_labels(img, scale_one_mm_in_px, int(np.maximum(height, width)))
     if wait:
         cv2.imshow(f"draw_ruler in {window_name}", img)
         cv2.waitKey(0)
     return img
 
 
-def save_photo(img_with_a_ruler):
-    # todo impl
-    return "path/to/photo.jpg"
+def save_photo(img_with_a_ruler, folder, file_name):
+    path_to_file = folder + file_name
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+    cv2.imwrite(path_to_file, img_with_a_ruler)
+    print("Photo saved to: " + path_to_file)
+    return path_to_file

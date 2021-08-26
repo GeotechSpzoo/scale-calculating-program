@@ -11,10 +11,11 @@ MIN_PX_DISTANCE_BETWEEN_DOTS_ZOOM_IN = 200
 ZOOM_IN_REF_LINE_LENGTH_MM = 1.4
 
 
-def calculate_scale(path_to_image):
+def calculate_scale(folder, file_name):
+    path_to_file = folder + file_name
     wait = False
-    print(path_to_image)
-    img = f.load_image(path_to_image)
+    print(path_to_file)
+    img = f.load_image(path_to_file)
     gray = f.bgr_to_gray(img)
     blurred = f.blur_bilateral_filter_min(gray)
     for i in range(35):
@@ -22,20 +23,20 @@ def calculate_scale(path_to_image):
     blurred = f.blur_bilateral_filter_min(blurred, wait=wait)
     binary = f.gray_to_binary(blurred, 77, wait=wait)
     edged = f.detect_edges_raw_canny(binary, 25, 100, wait=wait)
-    contours = f.find_contours(edged, path_to_image, wait=wait)
-    boxes = f.convert_contours_to_min_rect(contours, gray, path_to_image, wait=wait)
+    contours = f.find_contours(edged, path_to_file, wait=wait)
+    boxes = f.convert_contours_to_min_rect(contours, gray, path_to_file, wait=wait)
     filtered_boxes = f.filter_boxes_by_size(boxes, MIN_CAL_DOT_SIZE_ZOOM_IN_PX, MAX_CAL_DOT_SIZE_ZOOM_IN_PX, gray,
-                                            path_to_image, wait=wait)
-    dot1, dot2 = f.find_ref_dots(filtered_boxes, MIN_PX_DISTANCE_BETWEEN_DOTS_ZOOM_IN, gray, path_to_image, wait=wait)
+                                            path_to_file, wait=wait)
+    dot1, dot2 = f.find_ref_dots(filtered_boxes, MIN_PX_DISTANCE_BETWEEN_DOTS_ZOOM_IN, gray, path_to_file, wait=wait)
     if dot1 is None:
         print("REF OBJECT (calibration_dot1) NOT FOUND!")
         return
     if dot2 is None:
         print("REF OBJECT (calibration_dot2) NOT FOUND!")
         return
-    scale_one_mm_in_px = f.calculate_scale(dot1, dot2, ZOOM_IN_REF_LINE_LENGTH_MM, gray, path_to_image, wait=True)
-    img_with_a_ruler = f.draw_rulers(gray, 800, path_to_image, wait=True)
-    print(f.save_photo(img_with_a_ruler))
+    scale_one_mm_in_px = f.calculate_scale(dot1, dot2, ZOOM_IN_REF_LINE_LENGTH_MM, gray, path_to_file, wait=True)
+    img_with_a_ruler = f.draw_rulers(img, scale_one_mm_in_px, path_to_file, wait=True)
+    f.save_photo(img_with_a_ruler, "out_" + folder, "ruler_" + file_name)
     return scale_one_mm_in_px
 
 
@@ -49,7 +50,7 @@ iterations = 0
 pathToPhotos = "testTwoDots/"
 file_names = next(walk(pathToPhotos), (None, None, []))[2]
 for file_name in file_names:
-    scale_factor = calculate_scale(pathToPhotos + file_name)
+    scale_factor = calculate_scale(pathToPhotos, file_name)
     # find minimum and max scale_factor
     if scale_factor is not None:
         scale_factor_sum += scale_factor
