@@ -34,7 +34,7 @@ def calculate_scale(path_to_image):
         print("REF OBJECT (calibration_dot2) NOT FOUND!")
         return
     scale_one_mm_in_px = f.calculate_scale(dot1, dot2, ZOOM_IN_REF_LINE_LENGTH_MM, gray, path_to_image, wait=True)
-    img_with_a_ruler = f.draw_rulers(gray, 100, path_to_image, wait=True)
+    img_with_a_ruler = f.draw_rulers(gray, 800, path_to_image, wait=True)
     print(f.save_photo(img_with_a_ruler))
     return scale_one_mm_in_px
 
