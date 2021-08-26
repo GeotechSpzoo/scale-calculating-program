@@ -45,8 +45,8 @@ print(f"min_scale_factor: 1 mm = {min_scale_factor} px")
 print(f"max_scale_factor: 1 mm = {max_scale_factor} px")
 average_scale_factor = scale_factor_sum / iterations
 print(f"average_scale_factor: 1 mm = {average_scale_factor} px")
-max_min_deviation = max_scale_factor / min_scale_factor - 1
-print(f"max_min_deviation: {max_min_deviation * 100} %")
+min_max_deviation = max_scale_factor / min_scale_factor - 1
+print(f"min_max_deviation: {min_max_deviation * 100} %")
 mean_deviation = np.max(
     [np.abs(average_scale_factor - min_scale_factor), np.abs(average_scale_factor - max_scale_factor)])
 print(f"mean_deviation: {mean_deviation / average_scale_factor * 100} %")
