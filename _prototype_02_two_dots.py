@@ -36,7 +36,11 @@ def calculate_scale(folder, file_name):
         return
     scale_one_mm_in_px = f.calculate_scale(dot1, dot2, ZOOM_IN_REF_LINE_LENGTH_MM, gray, path_to_file, wait=True)
     img_with_a_ruler = f.draw_rulers(img, scale_one_mm_in_px, path_to_file, wait=True)
-    f.save_photo(img_with_a_ruler, "out_" + folder, "ruler_" + file_name)
+    output_folder = "out_" + folder
+    output_file_name = "ruler_" + file_name.replace(".jpg", "_pxmm{:.0f}.jpg".format(scale_one_mm_in_px))
+    output_path_to_file = output_folder + output_file_name
+    f.save_photo(img_with_a_ruler, output_path_to_file)
+    f.update_exif_resolution_tags(output_path_to_file, scale_one_mm_in_px)
     return scale_one_mm_in_px
 
 

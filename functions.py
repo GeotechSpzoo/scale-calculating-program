@@ -1,3 +1,6 @@
+import subprocess
+
+import exif
 from scipy.spatial import distance as dist
 from imutils import perspective
 from imutils import contours as cont
@@ -607,10 +610,18 @@ def draw_rulers(img, scale_one_mm_in_px, window_name, wait=True):
     return img
 
 
-def save_photo(img_with_a_ruler, folder, file_name):
-    path_to_file = folder + file_name
-    if not os.path.exists(folder):
-        os.mkdir(folder)
+def save_photo(img_with_a_ruler, path_to_file):
+    # path_to_file = folder + file_name
+    if not os.path.exists(path_to_file):
+        os.mkdir(path_to_file)
     cv2.imwrite(path_to_file, img_with_a_ruler)
     print("Photo saved to: " + path_to_file)
     return path_to_file
+
+
+def update_exif_resolution_tags(path_to_file, scale):
+    dpi = 25.4 * scale
+    subprocess.call(f"exiftool -a -u -g1 {path_to_file}")
+    subprocess.call(
+        f"exiftool -overwrite_original -XResolution={dpi} -YResolution={dpi} -ResolutionUnit=inches {path_to_file}")
+    subprocess.call(f"exiftool -a -u -g1 {path_to_file}")
