@@ -622,4 +622,9 @@ def save_photo(img_with_a_ruler, path_to_file):
 def update_exif_resolution_tags(path_to_file, scale):
     dpi = 25.4 * scale
     subprocess.call(
-        f"exiftool -overwrite_original -XResolution={dpi} -YResolution={dpi} -ResolutionUnit=inches {path_to_file}")
+        f"exiftool -overwrite_original"
+        f" -XResolution={dpi}"
+        f" -YResolution={dpi}"
+        f" -ResolutionUnit=inches"
+        f" -ProcessingSoftware=PythonOpenCV"
+        f" {path_to_file}")
