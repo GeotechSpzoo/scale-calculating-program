@@ -1,6 +1,4 @@
 import functions as f
-import numpy as np
-from os import walk
 
 MIN_CAL_DOT_SIZE_ZOOM_IN_PX = 83
 
@@ -37,7 +35,7 @@ def calculate_scale(folder, file_name):
     scale_one_mm_in_px = f.calculate_scale(dot1, dot2, ZOOM_IN_REF_LINE_LENGTH_MM, gray, path_to_file, wait=True)
     img_with_a_ruler = f.draw_rulers(img, scale_one_mm_in_px, path_to_file, wait=True)
     output_folder = "out_" + folder
-    output_file_name = "ruler_" + file_name.replace(".jpg", "_pxmm{:.0f}.jpg".format(scale_one_mm_in_px))
+    output_file_name = "ruler_" + file_name.replace(".jpg", "_{:.0f}dpmm.jpg".format(scale_one_mm_in_px))
     output_path_to_file = output_folder + output_file_name
     f.save_photo(img_with_a_ruler, output_path_to_file)
     f.update_exif_resolution_tags(output_path_to_file, scale_one_mm_in_px)
@@ -50,27 +48,42 @@ max_scale_factor = 0.0
 scale_factor_sum = 0.0
 iterations = 0
 
-# iterate through photos
-pathToPhotos = "testTwoDots/"
-file_names = next(walk(pathToPhotos), (None, None, []))[2]
-for file_name in file_names:
-    scale_factor = calculate_scale(pathToPhotos, file_name)
-    # find minimum and max scale_factor
-    if scale_factor is not None:
-        scale_factor_sum += scale_factor
-        iterations += 1
-        if scale_factor > max_scale_factor:
-            max_scale_factor = scale_factor
-        if scale_factor < min_scale_factor:
-            min_scale_factor = scale_factor
+found_jpegs = []
 
-print(f"min_scale_factor: 1 mm = {min_scale_factor} px")
-print(f"max_scale_factor: 1 mm = {max_scale_factor} px")
-average_scale_factor = scale_factor_sum / iterations
-print(f"average_scale_factor: 1 mm = {average_scale_factor} px")
-min_max_deviation = max_scale_factor / min_scale_factor - 1
-print(f"min_max_deviation: {min_max_deviation * 100} %")
-mean_deviation = np.max(
-    [np.abs(average_scale_factor - min_scale_factor), np.abs(average_scale_factor - max_scale_factor)])
-print(f"mean_deviation: {mean_deviation / average_scale_factor * 100} %")
+default_path_to_search = "C:\\Users\\pawel.drelich\\Desktop\\Materialy\\AnalizaObrazu\\SamplePhotosLabo\\3144"
+
+
+def request_path_to_find_photos():
+    global found_jpegs
+    # pathToPhotos = input("Podej mnie ten ścieżek do zdjęciówek:\n")
+    found_jpegs = f.find_all_jpegs(default_path_to_search, True)
+    return len(found_jpegs)
+
+
+# iterate through photos
+# pathToPhotos = "testTwoDots/"
+while request_path_to_find_photos() == 0:
+    pass
+
+for (path, file_name) in found_jpegs:
+    print(path)
+    scale_factor = calculate_scale(path, file_name)
+#     # find minimum and max scale_factor
+#     if scale_factor is not None:
+#         scale_factor_sum += scale_factor
+#         iterations += 1
+#         if scale_factor > max_scale_factor:
+#             max_scale_factor = scale_factor
+#         if scale_factor < min_scale_factor:
+#             min_scale_factor = scale_factor
+
+# print(f"min_scale_factor: 1 mm = {min_scale_factor} px")
+# print(f"max_scale_factor: 1 mm = {max_scale_factor} px")
+# average_scale_factor = scale_factor_sum / iterations
+# print(f"average_scale_factor: 1 mm = {average_scale_factor} px")
+# min_max_deviation = max_scale_factor / min_scale_factor - 1
+# print(f"min_max_deviation: {min_max_deviation * 100} %")
+# mean_deviation = np.max(
+#     [np.abs(average_scale_factor - min_scale_factor), np.abs(average_scale_factor - max_scale_factor)])
+# print(f"mean_deviation: {mean_deviation / average_scale_factor * 100} %")
 # calculate_scale("testTwoDots/2_testAlgo1_0_min_IR.jpg")

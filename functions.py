@@ -1,13 +1,12 @@
+import os
 import subprocess
 
-import exif
-from scipy.spatial import distance as dist
-from imutils import perspective
-from imutils import contours as cont
-import numpy as np
-import imutils
 import cv2
-import os
+import imutils
+import numpy as np
+from imutils import contours as cont
+from imutils import perspective
+from scipy.spatial import distance as dist
 
 KEY_ESC = 27
 KEY_SPACE = 32
@@ -628,3 +627,28 @@ def update_exif_resolution_tags(path_to_file, scale):
         f" -ResolutionUnit=inches"
         f" -ProcessingSoftware=PythonOpenCV"
         f" {path_to_file}")
+
+
+def find_all_jpegs(directory, show_file_paths=False):
+    file_counter = 0
+    found_jpegs = []
+    for root, dirs, files in os.walk(directory):
+        if len(files) > 0:
+            for file in files:
+                file_path = root + os.path.sep
+                if file.endswith(".jpg"):
+                    found_jpegs.append((file_path, file))
+                    file_counter += 1
+                    if show_file_paths:
+                        print(f"{file_counter}. {file}")
+
+                # print(sum(getsize(join(root, name)) for name in files), end="")
+                # print("bytes in", len(files), "non-directory files")
+                # if 'CVS' in dirs:
+                #     dirs.remove('CVS')  # don't visit CVS directories
+                # for file in files:
+                #     print(file)
+                # for dir in dirs:
+                #     print(dir)
+    print(f"Znaleziono: {file_counter} plików .jpg")
+    return found_jpegs

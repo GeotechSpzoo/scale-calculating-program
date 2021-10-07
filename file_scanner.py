@@ -2,6 +2,20 @@ import os
 
 
 def find_all_jpegs(directory, show_file_paths=False):
+    files_paths = next(os.walk(directory), (None, None, []))[2]
+    jpegs = []
+    jpeg_counter = 0
+    for file in files_paths:
+        if file.endswith(".jpg"):
+            jpegs.append(file)
+            jpeg_counter += 1
+            if show_file_paths:
+                print(f"{jpeg_counter}. {file}")
+    print(f"Znaleziono: {jpeg_counter} plików .jpg")
+    return jpegs
+
+
+def find_all_jpegs_2(directory, show_file_paths=False):
     file_counter = 0
     files_to_proceed = []
     for root, dirs, files in os.walk(directory):
