@@ -9,22 +9,22 @@ MIN_PX_DISTANCE_BETWEEN_DOTS_ZOOM_IN = 200
 ZOOM_IN_REF_LINE_LENGTH_MM = 1.4
 
 
-def calculate_scale(folder, file_name):
-    path_to_file = folder + file_name
-    wait = False
+def calculate_scale(folder, name):
+    path_to_file = folder + name
+    wait = True
     print(path_to_file)
     img = f.load_image(path_to_file)
     gray = f.bgr_to_gray(img)
-    blurred = f.blur_bilateral_filter_min(gray)
+    blurred = f.blur_bilateral_filter_min(gray, "")
     for i in range(35):
-        blurred = f.blur_bilateral_filter_min(blurred)
-    blurred = f.blur_bilateral_filter_min(blurred, wait=wait)
-    binary = f.gray_to_binary(blurred, 77, wait=wait)
-    edged = f.detect_edges_raw_canny(binary, 25, 100, wait=wait)
-    contours = f.find_contours(edged, path_to_file, wait=wait)
+        blurred = f.blur_bilateral_filter_min(blurred, "")
+    blurred = f.blur_bilateral_filter_min(blurred, path_to_file, wait=wait)
+    binary = f.gray_to_binary(blurred, 77, path_to_file, wait=wait)
+    edged = f.detect_edges_raw_canny(binary, 25, 100, path_to_file)
+    contours = f.find_contours(edged, path_to_file)
     boxes = f.convert_contours_to_min_rect(contours, gray, path_to_file, wait=wait)
     filtered_boxes = f.filter_boxes_by_size(boxes, MIN_CAL_DOT_SIZE_ZOOM_IN_PX, MAX_CAL_DOT_SIZE_ZOOM_IN_PX, gray,
-                                            path_to_file, wait=wait)
+                                            path_to_file)
     dot1, dot2 = f.find_ref_dots(filtered_boxes, MIN_PX_DISTANCE_BETWEEN_DOTS_ZOOM_IN, gray, path_to_file, wait=wait)
     if dot1 is None:
         print("REF OBJECT (calibration_dot1) NOT FOUND!")
@@ -35,7 +35,7 @@ def calculate_scale(folder, file_name):
     scale_one_mm_in_px = f.calculate_scale(dot1, dot2, ZOOM_IN_REF_LINE_LENGTH_MM, gray, path_to_file, wait=True)
     img_with_a_ruler = f.draw_rulers(img, scale_one_mm_in_px, path_to_file, wait=True)
     output_folder = "out_" + folder
-    output_file_name = "ruler_" + file_name.replace(".jpg", "_{:.0f}dpmm.jpg".format(scale_one_mm_in_px))
+    output_file_name = "ruler_" + name.replace(".jpg", "_{:.0f}dpmm.jpg".format(scale_one_mm_in_px))
     output_path_to_file = output_folder + output_file_name
     f.save_photo(img_with_a_ruler, output_path_to_file)
     f.update_exif_resolution_tags(output_path_to_file, scale_one_mm_in_px)

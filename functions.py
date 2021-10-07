@@ -67,10 +67,10 @@ def sharpen(img, wait=False):
     return sharpened
 
 
-def gray_to_binary(gray, tresh, wait=False):
+def gray_to_binary(gray, tresh, path, wait=False):
     ret, thresholded = cv2.threshold(gray, tresh, 255, cv2.THRESH_BINARY)
     if wait:
-        cv2.imshow(f"gray_to_binary tresh: {tresh}", thresholded)
+        cv2.imshow(f"gray_to_binary tresh: {tresh} {path}", thresholded)
         cv2.waitKey(0)
     return thresholded
 
@@ -97,13 +97,13 @@ def blur_bilateral_filter(gray, d, sigma, wait=False):
     return blurred
 
 
-def blur_bilateral_filter_min(gray, wait=False):
+def blur_bilateral_filter_min(gray, path, wait=False):
     d = 4
     sigma = 11
-    window_name = f"blur_bilateral_filter d: {d}, sigma: {sigma}"
+    window_name = f"d: {d}, sigma: {sigma}"
     blurred = cv2.bilateralFilter(gray, d, sigma, sigma)
     if wait:
-        cv2.imshow(window_name, blurred)
+        cv2.imshow(f"blur_bilateral_filter_min {window_name} {path}", blurred)
         cv2.waitKey(0)
     return blurred
 
@@ -164,10 +164,10 @@ def detect_edges_auto(gray_img, sigma=0.33, wait=False):
 
 
 # Find edges using canny edge detector
-def detect_edges_raw_canny(gray_img, lower, upper, wait=False):
+def detect_edges_raw_canny(gray_img, lower, upper, path, wait=False):
     edged = cv2.Canny(gray_img, lower, upper)
     if wait:
-        cv2.imshow(f"detect_edges_raw_canny lower={lower}, upper={upper}", edged)
+        cv2.imshow(f"detect_edges_raw_canny lower={lower}, upper={upper} {path}", edged)
         cv2.waitKey(0)
     return edged
 
@@ -421,7 +421,7 @@ def find_contours(binary_img, window_name, sort="top-to-bottom", wait=False):
     if wait:
         orig = gray_to_bgr(binary_img)
         draw_contours_with_label(contours_list, orig)
-        cv2.imshow(f"find_contours in {window_name}", orig)
+        cv2.imshow(f"find_contours {window_name}", orig)
         cv2.waitKey(0)
     return contours_list
 
