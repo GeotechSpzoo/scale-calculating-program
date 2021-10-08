@@ -1,8 +1,8 @@
 import functions as f
 
-MIN_CAL_DOT_SIZE_PX = 120
+MIN_CAL_DOT_SIZE_PX = 105
 
-MAX_CAL_DOT_SIZE_PX = 160
+MAX_CAL_DOT_SIZE_PX = 180
 
 MIN_PX_DISTANCE_BETWEEN_DOTS_ZOOM_IN = 500
 
@@ -11,8 +11,9 @@ ZOOM_IN_REF_LINE_LENGTH_MM = 1.4
 
 def calculate_scale(folder, name):
     path_to_file = folder + name
+    print("---------------------------------------")
+    print(f"Calculating scale for: {path_to_file}")
     wait = True
-    print(path_to_file)
     img = f.load_image(path_to_file)
     crop = f.crop_dots(img)
     gray = f.bgr_to_gray(crop)
@@ -29,9 +30,11 @@ def calculate_scale(folder, name):
     dot1, dot2 = f.find_ref_dots(filtered_boxes, MIN_PX_DISTANCE_BETWEEN_DOTS_ZOOM_IN, gray, path_to_file, wait=wait)
     if dot1 is None:
         print("REF OBJECT (calibration_dot1) NOT FOUND!")
+        print("Scale calculation aborted!")
         return
     if dot2 is None:
         print("REF OBJECT (calibration_dot2) NOT FOUND!")
+        print("Scale calculation aborted!")
         return
     scale_one_mm_in_px = f.calculate_scale(dot1, dot2, ZOOM_IN_REF_LINE_LENGTH_MM, gray, path_to_file, wait=True)
     img_with_a_ruler = f.draw_rulers(img, scale_one_mm_in_px, path_to_file, wait=True)
@@ -40,6 +43,7 @@ def calculate_scale(folder, name):
     output_path_to_file = output_folder + output_file_name
     f.save_photo(img_with_a_ruler, output_path_to_file)
     f.update_exif_resolution_tags(output_path_to_file, scale_one_mm_in_px)
+    print(f"Scale calculated and is equal to: 1mm = {scale_one_mm_in_px}px")
     return scale_one_mm_in_px
 
 
@@ -57,7 +61,7 @@ default_path_to_search = "C:\\Users\\pawel.drelich\\Desktop\\Materialy\\AnalizaO
 def request_path_to_find_photos():
     global found_jpegs
     # pathToPhotos = input("Podej mnie ten ścieżek do zdjęciówek:\n")
-    found_jpegs = f.find_all_jpegs(default_path_to_search, True)
+    found_jpegs = f.find_all_jpegs(default_path_to_search, "zoom-in")
     return len(found_jpegs)
 
 
@@ -67,7 +71,6 @@ while request_path_to_find_photos() == 0:
     pass
 
 for (path, file_name) in found_jpegs:
-    print(path)
     scale_factor = calculate_scale(path, file_name)
 #     # find minimum and max scale_factor
 #     if scale_factor is not None:

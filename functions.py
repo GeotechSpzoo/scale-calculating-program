@@ -33,7 +33,7 @@ ZOOM_OUT_HEIGHT_MILLIMETERS = PHOTO_HEIGHT_PIXELS / ZOOM_OUT_MILLIMETER_IN_PIXEL
 def crop_dots(img):
     height = img.shape[0]
     width = img.shape[1]
-    crop_img = img[0:int(0.25 * height), 0:width]
+    crop_img = img[0:int(0.2 * height), 0:width]
     cv2.imshow("cropped", crop_img)
     return crop_img
 
@@ -88,7 +88,8 @@ def sharpen(img, wait=False):
 
 
 def gray_to_binary(gray, tresh, path, wait=False):
-    ret, thresholded = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+    average = gray.mean(axis=0).mean(axis=0)
+    ret, thresholded = cv2.threshold(gray, average, 255, cv2.THRESH_BINARY)
     if wait:
         cv2.imshow(f"gray_to_binary tresh: {tresh} {path}", thresholded)
         cv2.waitKey(0)
@@ -649,17 +650,19 @@ def update_exif_resolution_tags(path_to_file, scale):
         f" {path_to_file}")
 
 
-def find_all_jpegs(directory, show_file_paths=False):
+def find_all_jpegs(directory, file_name_contains="", show_file_names=False):
+    print(
+        f"Przeszukiwanie folderów i podfolderów:\n {directory}\nw poszukiwaniu plików '.jpg' zawierających frazę: '{file_name_contains}'")
     file_counter = 0
     found_jpegs = []
     for root, dirs, files in os.walk(directory):
         if len(files) > 0:
             for file in files:
                 file_path = root + os.path.sep
-                if file.endswith(".jpg"):
+                if file.endswith(".jpg") and file_name_contains in file:
                     found_jpegs.append((file_path, file))
                     file_counter += 1
-                    if show_file_paths:
+                    if show_file_names:
                         print(f"{file_counter}. {file}")
 
                 # print(sum(getsize(join(root, name)) for name in files), end="")
@@ -670,5 +673,5 @@ def find_all_jpegs(directory, show_file_paths=False):
                 #     print(file)
                 # for dir in dirs:
                 #     print(dir)
-    print(f"Znaleziono: {file_counter} plików .jpg")
+    print(f"Znaleziono: {file_counter} plików.")
     return found_jpegs
