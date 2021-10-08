@@ -8,6 +8,8 @@ from imutils import contours as cont
 from imutils import perspective
 from scipy.spatial import distance as dist
 
+import exif
+
 KEY_ESC = 27
 KEY_SPACE = 32
 KEY_BACKSPACE = 8
@@ -89,7 +91,7 @@ def sharpen(img, wait=False):
 
 def gray_to_binary(gray, tresh, path, wait=False):
     average = gray.mean(axis=0).mean(axis=0)
-    ret, thresholded = cv2.threshold(gray, average, 255, cv2.THRESH_BINARY)
+    ret, thresholded = cv2.threshold(gray, average - 0.3 * average, 255, cv2.THRESH_BINARY)
     if wait:
         cv2.imshow(f"gray_to_binary tresh: {tresh} {path}", thresholded)
         cv2.waitKey(0)
@@ -551,9 +553,9 @@ def calculate_scale(dot1, dot2, ref_dist, gray, window_name, wait=False):
     line = (dot1_center, dot2_center)
     line_length = dist.euclidean(dot1_center, dot2_center)
     scale_one_mm_in_px = line_length / ref_dist
-    label_above = "calculate_scale 1 mm = {:.2f} px".format(scale_one_mm_in_px)
+    label_above = "calculated_scale 1 mm = {:.2f} px".format(scale_one_mm_in_px)
     print(label_above)
-    print(f"calculate_scale 100 px = {100 / scale_one_mm_in_px} mm")
+    print(f"calculate_scaled 100 px = {100 / scale_one_mm_in_px} mm")
     label_under = "line length = {:.2f} px = ".format(line_length) + "{:.2f} mm".format(
         line_length / scale_one_mm_in_px)
     if wait:
@@ -562,6 +564,8 @@ def calculate_scale(dot1, dot2, ref_dist, gray, window_name, wait=False):
         cv2.imshow(f"find_ref_dots in {window_name}", orig)
         cv2.waitKey(0)
     return scale_one_mm_in_px
+
+
 RULER_THICKNESS_VERY_BOLD = 3
 RULER_THICKNESS_BOLD = 3
 RULER_THICKNESS_NORMAL = 2
@@ -630,23 +634,32 @@ def draw_rulers(img, scale_one_mm_in_px, window_name, wait=True):
     return img
 
 
-def save_photo(img_with_a_ruler, path_to_file):
+def save_photo(img_with_a_ruler, path_to_folder, path_to_file):
     # path_to_file = folder + file_name
-    if not os.path.exists(path_to_file):
-        os.mkdir(path_to_file)
+    if not os.path.exists(path_to_folder):
+        os.mkdir(path_to_folder)
     cv2.imwrite(path_to_file, img_with_a_ruler)
     print("Photo saved to: " + path_to_file)
     return path_to_file
 
 
-def update_exif_resolution_tags(path_to_file, scale):
+def exif_copy_all_tags(source_file, destination_file):
+    exif.copy_all_tags(source_file, destination_file)
+
+
+def exif_update_resolution_tags(path_to_file, scale):
     dpi = 25.4 * scale
+    formatted_scale = "{:.0f}".format(scale)
+    comment = exif.read_tag_value("UserComment", path_to_file)
+    final_comment = f"{comment}calc{formatted_scale}dpmm;"
     subprocess.call(
         f"exiftool -overwrite_original"
         f" -XResolution={dpi}"
         f" -YResolution={dpi}"
         f" -ResolutionUnit=inches"
         f" -ProcessingSoftware=PythonOpenCV"
+        f" -XPComment={final_comment}"
+        f" -UserComment={final_comment}"
         f" {path_to_file}")
 
 
