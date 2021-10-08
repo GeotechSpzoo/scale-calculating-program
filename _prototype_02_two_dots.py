@@ -1,10 +1,10 @@
 import functions as f
 
-MIN_CAL_DOT_SIZE_ZOOM_IN_PX = 83
+MIN_CAL_DOT_SIZE_PX = 120
 
-MAX_CAL_DOT_SIZE_ZOOM_IN_PX = 108
+MAX_CAL_DOT_SIZE_PX = 160
 
-MIN_PX_DISTANCE_BETWEEN_DOTS_ZOOM_IN = 200
+MIN_PX_DISTANCE_BETWEEN_DOTS_ZOOM_IN = 500
 
 ZOOM_IN_REF_LINE_LENGTH_MM = 1.4
 
@@ -14,7 +14,8 @@ def calculate_scale(folder, name):
     wait = True
     print(path_to_file)
     img = f.load_image(path_to_file)
-    gray = f.bgr_to_gray(img)
+    crop = f.crop_dots(img)
+    gray = f.bgr_to_gray(crop)
     blurred = f.blur_bilateral_filter_min(gray, "")
     for i in range(35):
         blurred = f.blur_bilateral_filter_min(blurred, "")
@@ -23,8 +24,8 @@ def calculate_scale(folder, name):
     edged = f.detect_edges_raw_canny(binary, 25, 100, path_to_file)
     contours = f.find_contours(edged, path_to_file)
     boxes = f.convert_contours_to_min_rect(contours, gray, path_to_file, wait=wait)
-    filtered_boxes = f.filter_boxes_by_size(boxes, MIN_CAL_DOT_SIZE_ZOOM_IN_PX, MAX_CAL_DOT_SIZE_ZOOM_IN_PX, gray,
-                                            path_to_file)
+    filtered_boxes = f.filter_boxes_by_size(boxes, MIN_CAL_DOT_SIZE_PX, MAX_CAL_DOT_SIZE_PX, gray,
+                                            path_to_file, wait=wait)
     dot1, dot2 = f.find_ref_dots(filtered_boxes, MIN_PX_DISTANCE_BETWEEN_DOTS_ZOOM_IN, gray, path_to_file, wait=wait)
     if dot1 is None:
         print("REF OBJECT (calibration_dot1) NOT FOUND!")
@@ -87,3 +88,5 @@ for (path, file_name) in found_jpegs:
 #     [np.abs(average_scale_factor - min_scale_factor), np.abs(average_scale_factor - max_scale_factor)])
 # print(f"mean_deviation: {mean_deviation / average_scale_factor * 100} %")
 # calculate_scale("testTwoDots/2_testAlgo1_0_min_IR.jpg")
+
+f.close_all_windows()

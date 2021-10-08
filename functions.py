@@ -30,6 +30,26 @@ ZOOM_OUT_WIDTH_MILLIMETERS = PHOTO_WIDTH_PIXELS / ZOOM_OUT_MILLIMETER_IN_PIXELS 
 ZOOM_OUT_HEIGHT_MILLIMETERS = PHOTO_HEIGHT_PIXELS / ZOOM_OUT_MILLIMETER_IN_PIXELS  # = 10,24 mm
 
 
+def crop_dots(img):
+    height = img.shape[0]
+    width = img.shape[1]
+    crop_img = img[0:int(0.25 * height), 0:width]
+    cv2.imshow("cropped", crop_img)
+    return crop_img
+
+
+def crop_sample(img):
+    height = img.shape[0]
+    width = img.shape[1]
+    crop_img = img[int(0.25 * height):height, 0:width]
+    cv2.imshow("cropped", crop_img)
+    return crop_img
+
+
+def close_all_windows():
+    cv2.destroyAllWindows()
+
+
 def contrast_increase_clahe(img, wait=False):
     # -----Converting image to LAB Color model-----------------------------------
     lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
@@ -68,7 +88,7 @@ def sharpen(img, wait=False):
 
 
 def gray_to_binary(gray, tresh, path, wait=False):
-    ret, thresholded = cv2.threshold(gray, tresh, 255, cv2.THRESH_BINARY)
+    ret, thresholded = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
     if wait:
         cv2.imshow(f"gray_to_binary tresh: {tresh} {path}", thresholded)
         cv2.waitKey(0)
@@ -130,10 +150,10 @@ def gray_to_bgr(gray, wait=False):
         cv2.imshow("gray_to_bgr", bgr)
         cv2.waitKey(0)
     return bgr
-
-
 # Find edges using canny edge detector
 # noinspection PyTypeChecker
+
+
 def detect_edges_sigma_v(gray_img, sigma=0.33, v=202, wait=False):
     # compute the median of the single channel pixel intensities
     # v = np.median(grayim)  # 202.0
@@ -146,9 +166,9 @@ def detect_edges_sigma_v(gray_img, sigma=0.33, v=202, wait=False):
         cv2.imshow(f"detect_edges_sigma_v sigma={sigma}, v={v}", edged)
         cv2.waitKey(0)
     return edged
-
-
 # Find edges using canny edge detector
+
+
 def detect_edges_auto(gray_img, sigma=0.33, wait=False):
     # compute the median of the single channel pixel intensities
     v = np.median(gray_img)  # 202.0
@@ -161,9 +181,9 @@ def detect_edges_auto(gray_img, sigma=0.33, wait=False):
         cv2.imshow(f"detect_edges_auto sigma={sigma}, v={v}, lower={lower}, upper={upper}", edged)
         cv2.waitKey(0)
     return edged
-
-
 # Find edges using canny edge detector
+
+
 def detect_edges_raw_canny(gray_img, lower, upper, path, wait=False):
     edged = cv2.Canny(gray_img, lower, upper)
     if wait:
@@ -417,7 +437,8 @@ def find_contours(binary_img, window_name, sort="top-to-bottom", wait=False):
     contours_list = cv2.findContours(binary_img, cv2.RETR_LIST,
                                      cv2.CHAIN_APPROX_TC89_L1)
     contours_list = imutils.grab_contours(contours_list)
-    (contours_list, _) = cont.sort_contours(contours_list, method=sort)
+    if len(contours_list) > 0:
+        (contours_list, _) = cont.sort_contours(contours_list, method=sort)
     if wait:
         orig = gray_to_bgr(binary_img)
         draw_contours_with_label(contours_list, orig)
@@ -540,22 +561,21 @@ def calculate_scale(dot1, dot2, ref_dist, gray, window_name, wait=False):
         cv2.imshow(f"find_ref_dots in {window_name}", orig)
         cv2.waitKey(0)
     return scale_one_mm_in_px
-
-
 RULER_THICKNESS_VERY_BOLD = 3
 RULER_THICKNESS_BOLD = 3
 RULER_THICKNESS_NORMAL = 2
-RULER_THICKNESS_LIGHT = 1
 
+RULER_THICKNESS_LIGHT = 1
 RULER_LINE_LENGTH_VERY_LONG = 50
 RULER_LINE_LENGTH_LONG = 40
 RULER_LINE_LENGTH_NORMAL = 30
-RULER_LINE_LENGTH_SHORT = 20
 
+RULER_LINE_LENGTH_SHORT = 20
 RULER_LINE_COLOR = (0, 0, 0)
 RULER_LABEL_COLOR = (255, 255, 255)
 RULER_LABEL_SIZE = 0.5
 RULER_LABEL_THICKNESS = 2
+
 RULER_05_LABEL_LIMIT_PX = 200
 
 

@@ -47,7 +47,7 @@ def grain_segmentation(img):
     # Finding sure foreground area using distance transform and thresholding
     # intensities of the points inside the foreground regions are changed to
     # distance their respective distances from the closest 0 value (boundary).
-    # https://www.tutorialspoint.com/opencv/opencv_distance_transformation.htm
+    # https://www.tutorialspoint.com/opencv/opencv_distance_transformation.html
     dist_transform = cv2.distanceTransform(opening, cv2.DIST_L2, 3)
 
     # Let us threshold the dist transform by starting at 1/2 its max value.
@@ -77,16 +77,16 @@ def grain_segmentation(img):
     # plt.imshow(markers)   #Look at the 3 distinct regions.
 
     # Now we are ready for watershed filling.
-    markers = cv2.watershed(img1, markers)
+    markers = cv2.watershed(img, markers)
     # The boundary region will be marked -1
     # https://docs.opencv.org/3.3.1/d7/d1b/group__imgproc__misc.html#ga3267243e4d3f95165d55a618c65ac6e1
 
     # Let us color boundaries in yellow.
-    img1[markers == -1] = [0, 255, 255]
+    img[markers == -1] = [0, 255, 255]
 
     #    img2 = color.label2rgb(markers, bg_label=0)
 
-    # cv2.imshow('Overlay on original image', img1)
+    # cv2.imshow('Overlay on original image', img)
     # cv2.imshow('Colored Grains', img2)
     # cv2.waitKey(0)
 
@@ -119,9 +119,9 @@ propList = ['Area',
 # path = "images/grains/*.jpg"
 # for file in glob.glob(path):
 #     print(file)  # just stop here to see all file names printed
-#     img1 = cv2.imread(file)
+#     img = cv2.imread(file)
 #
-#     img = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+#     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 #
 #     # Call the grain segmentation function.
 #     regions = grain_segmentation(img)
