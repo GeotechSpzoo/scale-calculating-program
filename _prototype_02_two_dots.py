@@ -30,23 +30,34 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
                  output_samples_folder,
                  output_samples_folder + "\\" + photo_file_name,
                  override=False)
-    gray = f.bgr_to_gray(crop)
+    # gray = f.bgr_to_gray(crop)
+    gray = f.bgr_to_custom_gray(crop)
     blurred = f.blur_bilateral_filter_min(gray, "")
     for i in range(35):
         blurred = f.blur_bilateral_filter_min(blurred, "")
     blurred = f.blur_bilateral_filter_min(blurred, input_file, wait=wait)
-    binary = f.gray_to_binary(blurred, 77, input_file, is_zoom_in, wait=wait)
-    edged = f.detect_edges_raw_canny(binary, 25, 100, input_file)
-    contours = f.find_contours(edged, input_file)
-    boxes = f.convert_contours_to_min_rect(contours, gray, input_file, wait=wait)
-    filtered_boxes = f.filter_boxes_by_size(boxes, MIN_CAL_DOT_SIZE_IN_PX, MAX_CAL_DOT_SIZE_IN_PX, gray,
-                                            input_file, wait=wait)
-    dot1, dot2 = f.find_ref_dots(filtered_boxes, MIN_DISTANCE_BETWEEN_DOTS_IN_PX, gray, input_file, wait=wait)
-    if dot1 is None:
-        abort_message("REF OBJECT (calibration_dot1) NOT FOUND!")
-        return -1
-    if dot2 is None:
-        abort_message("REF OBJECT (calibration_dot2) NOT FOUND!")
+    dots_found = False
+    dot1, dot2 = None, None
+    for tresh in range(0, 30):
+        binary = f.gray_to_binary(blurred, input_file, tresh / 100, is_zoom_in, wait=wait)
+        edged = f.detect_edges_raw_canny(binary, 25, 100, input_file)
+        contours = f.find_contours(edged, input_file)
+        boxes = f.convert_contours_to_min_rect(contours, gray, input_file, wait=wait)
+        filtered_boxes = f.filter_boxes_by_size(boxes, MIN_CAL_DOT_SIZE_IN_PX, MAX_CAL_DOT_SIZE_IN_PX, gray,
+                                                input_file, wait=wait)
+        dot1, dot2 = f.find_ref_dots(filtered_boxes, MIN_DISTANCE_BETWEEN_DOTS_IN_PX, gray, input_file, wait=wait)
+        if dot1 is None:
+            continue
+        elif dot2 is None:
+            continue
+        else:
+            dots_found = True
+            break
+    if not dots_found:
+        if dot1 is None:
+            abort_message("REF OBJECT (calibration_dot1) NOT FOUND!")
+        elif dot2 is None:
+            abort_message("REF OBJECT (calibration_dot2) NOT FOUND!")
         return -1
     if is_zoom_in:
         calculated_scale_one_mm_in_px = f.calculate_scale(dot1, dot2, ZOOM_IN_REF_LINE_LENGTH_IN_MM, gray,
@@ -54,7 +65,8 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     else:
         calculated_scale_one_mm_in_px = f.calculate_scale(dot1, dot2, ZOOM_OUT_REF_LINE_LENGTH_IN_MM, gray,
                                                           input_file, wait=wait)
-    img_with_a_ruler = f.draw_rulers(img, dot1, dot2, calculated_scale_one_mm_in_px, input_file, wait=wait)
+    img_with_a_ruler = f.draw_rulers(img, dot1, dot2, calculated_scale_one_mm_in_px, input_file, wait=wait,
+                                     show_image=wait)
     output_folder = main_subject_folder + "_scale_calculated\\"
     output_file_name = "ruler_" + photo_file_name.replace(".jpg",
                                                           "_{:.0f}dpmm.jpg".format(calculated_scale_one_mm_in_px))

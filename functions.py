@@ -118,12 +118,12 @@ def sharpen(img, wait=False):
     return sharpened
 
 
-def gray_to_binary(gray, tresh, path, zoom_in=True, wait=False):
+def gray_to_binary(gray, path, tresh=0.0, zoom_in=True, wait=False):
     average = gray.mean(axis=0).mean(axis=0)
     if zoom_in:
-        ret, thresholded = cv2.threshold(gray, average - 0.25 * average, 255, cv2.THRESH_BINARY)
+        ret, thresholded = cv2.threshold(gray, average - tresh * average, 255, cv2.THRESH_BINARY)
     else:
-        ret, thresholded = cv2.threshold(gray, average + 0.25 * average, 255, cv2.THRESH_BINARY)
+        ret, thresholded = cv2.threshold(gray, average + tresh * average, 255, cv2.THRESH_BINARY)
     if wait:
         cv2.imshow(f"gray_to_binary tresh: {tresh} {path}", thresholded)
         cv2.waitKey(0)
@@ -177,6 +177,37 @@ def bgr_to_gray(bgr_img, wait=False):
         cv2.imshow("bgr_to_gray", gray)
         cv2.waitKey(0)
     return gray
+
+
+def bgr_to_custom_gray(bgr_img, wait=False):
+    bg_width = bgr_img.shape[0]
+    bg_height = bgr_img.shape[1]
+    custom_gray = np.zeros((bg_width, bg_height, 1), np.uint8)
+    # width = bg_width - x
+    # height = bg_height - y
+    # if fr_width < width:
+    #     width = fr_width
+    # if fr_height < height:
+    #     height = fr_height
+    # normalize alpha channels from 0-255 to 0-1
+    # alpha_background = background[x:x + width, y:y + height, 2] / 255.0
+    # alpha_foreground = foreground[:width, :height, 2] / 255.0
+    # set adjusted colors
+    for pxW in range(0, bg_width - 1):
+        for pxH in range(0, bg_height - 1):
+            b = bgr_img[pxW, pxH, 0]
+            g = bgr_img[pxW, pxH, 1]
+            r = bgr_img[pxW, pxH, 2]
+            # print(f"b: {b} g: {g} r: {r}")
+            rgb_sum = int(b) + int(g) + int(r)
+            # print(f"rgb_sum: {rgb_sum}")
+            custom_gray[pxW, pxH, 0] = rgb_sum / 3
+    # set adjusted alpha and denormalize back to 0-255
+    # background[x:x + width, y:y + height, 2] = (1 - (1 - alpha_foreground) * (1 - alpha_background)) * 255
+    if wait:
+        cv2.imshow("bgr_to_custom_gray", custom_gray)
+        cv2.waitKey(0)
+    return custom_gray
 
 
 def gray_to_bgr(gray, wait=False):
@@ -663,7 +694,7 @@ def draw_rulers_with_labels(img, one_mm_in_px, width):
         counter += 1
 
 
-def draw_rulers(img, dot1, dot2, scale_one_mm_in_px, window_name, wait=True):
+def draw_rulers(img, dot1, dot2, scale_one_mm_in_px, window_name, wait=False, show_image=False):
     dot1_center = box_center(dot1)
     dot2_center = box_center(dot2)
     line = (dot1_center, dot2_center)
@@ -676,7 +707,8 @@ def draw_rulers(img, dot1, dot2, scale_one_mm_in_px, window_name, wait=True):
     draw_line_with_label(img, line, label_above, label_under)
     draw_box_with_corners(dot1, img)
     draw_box_with_corners(dot2, img)
-    # cv2.imshow(f"draw_ruler {window_name}", img)
+    if show_image:
+        cv2.imshow(f"draw_ruler {window_name}", img)
     if wait:
         cv2.waitKey(0)
     return img
@@ -748,3 +780,10 @@ def find_all_jpegs(directory, file_name_contains="", show_paths=False):
                 #     print(dir)
     print(f"Znaleziono: {file_counter} plików.")
     return found_jpegs
+
+# img = load_image("bgr_to_gray.png")
+# cv2.imshow("test", img)
+# cv2.waitKey(0)
+# gray = bgr_to_custom_gray(img, wait=True)
+# gray = bgr_to_gray(img, wait=True)
+# cv2.waitKey(0)
