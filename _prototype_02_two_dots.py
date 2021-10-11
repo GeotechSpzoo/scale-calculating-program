@@ -3,16 +3,16 @@ import functions as f
 ZOOM_IN = "zoom-in"
 ZOOM_OUT = "zoom-out"
 
-ZOOM_IN_REF_LINE_LENGTH_MM = 1.4
-ZOOM_OUT_REF_LINE_LENGTH_MM = 7 * 1.4
+ZOOM_IN_REF_LINE_LENGTH_IN_MM = 1.4  # millimeters
+ZOOM_OUT_REF_LINE_LENGTH_IN_MM = 7 * 1.4  # millimeters
 
 selected_zoom = ZOOM_OUT
 
-MIN_CAL_DOT_SIZE_PX = 90
+MIN_CAL_DOT_SIZE_IN_PX = 90  # pixels
 
-MAX_CAL_DOT_SIZE_PX = 186
+MAX_CAL_DOT_SIZE_IN_PX = 186  # pixels
 
-MIN_PX_DISTANCE_BETWEEN_DOTS = 777
+MIN_DISTANCE_BETWEEN_DOTS_IN_PX = 777  # pixels
 
 
 def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
@@ -37,9 +37,9 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     edged = f.detect_edges_raw_canny(binary, 25, 100, input_file)
     contours = f.find_contours(edged, input_file)
     boxes = f.convert_contours_to_min_rect(contours, gray, input_file, wait=wait)
-    filtered_boxes = f.filter_boxes_by_size(boxes, MIN_CAL_DOT_SIZE_PX, MAX_CAL_DOT_SIZE_PX, gray,
+    filtered_boxes = f.filter_boxes_by_size(boxes, MIN_CAL_DOT_SIZE_IN_PX, MAX_CAL_DOT_SIZE_IN_PX, gray,
                                             input_file, wait=wait)
-    dot1, dot2 = f.find_ref_dots(filtered_boxes, MIN_PX_DISTANCE_BETWEEN_DOTS, gray, input_file, wait=wait)
+    dot1, dot2 = f.find_ref_dots(filtered_boxes, MIN_DISTANCE_BETWEEN_DOTS_IN_PX, gray, input_file, wait=wait)
     if dot1 is None:
         print("REF OBJECT (calibration_dot1) NOT FOUND!")
         print("Scale calculation aborted!")
@@ -49,10 +49,10 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
         print("Scale calculation aborted!")
         return
     if selected_zoom == ZOOM_IN:
-        calculated_scale_one_mm_in_px = f.calculate_and_draw_scale(dot1, dot2, ZOOM_IN_REF_LINE_LENGTH_MM, gray,
+        calculated_scale_one_mm_in_px = f.calculate_and_draw_scale(dot1, dot2, ZOOM_IN_REF_LINE_LENGTH_IN_MM, gray,
                                                                    input_file, wait=True)
     else:
-        calculated_scale_one_mm_in_px = f.calculate_and_draw_scale(dot1, dot2, ZOOM_OUT_REF_LINE_LENGTH_MM, gray,
+        calculated_scale_one_mm_in_px = f.calculate_and_draw_scale(dot1, dot2, ZOOM_OUT_REF_LINE_LENGTH_IN_MM, gray,
                                                                    input_file, wait=True)
     img_with_a_ruler = f.draw_rulers(img, calculated_scale_one_mm_in_px, input_file, wait=True)
     output_folder = main_subject_folder + "_scale_calculated\\"
@@ -64,12 +64,6 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     f.exif_update_resolution_tags(output_path_to_file, calculated_scale_one_mm_in_px)
     return calculated_scale_one_mm_in_px
 
-
-scale_factor = 0
-min_scale_factor = 99999999999999.0
-max_scale_factor = 0.0
-scale_factor_sum = 0.0
-iterations = 0
 
 found_jpegs = []
 
@@ -89,25 +83,6 @@ while request_path_to_find_photos() == 0:
     pass
 
 for (file_folder_path, file_name) in found_jpegs:
-    scale_factor = calculate_scale(file_folder_path, default_path_to_search, file_name)
-#     # find minimum and max scale_factor
-#     if scale_factor is not None:
-#         scale_factor_sum += scale_factor
-#         iterations += 1
-#         if scale_factor > max_scale_factor:
-#             max_scale_factor = scale_factor
-#         if scale_factor < min_scale_factor:
-#             min_scale_factor = scale_factor
-
-# print(f"min_scale_factor: 1 mm = {min_scale_factor} px")
-# print(f"max_scale_factor: 1 mm = {max_scale_factor} px")
-# average_scale_factor = scale_factor_sum / iterations
-# print(f"average_scale_factor: 1 mm = {average_scale_factor} px")
-# min_max_deviation = max_scale_factor / min_scale_factor - 1
-# print(f"min_max_deviation: {min_max_deviation * 100} %")
-# mean_deviation = np.max(
-#     [np.abs(average_scale_factor - min_scale_factor), np.abs(average_scale_factor - max_scale_factor)])
-# print(f"mean_deviation: {mean_deviation / average_scale_factor * 100} %")
-# calculate_scale("testTwoDots/2_testAlgo1_0_min_IR.jpg")
+    calculate_scale(file_folder_path, default_path_to_search, file_name)
 
 f.close_all_windows()
