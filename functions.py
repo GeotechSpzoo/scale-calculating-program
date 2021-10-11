@@ -32,12 +32,41 @@ ZOOM_OUT_WIDTH_MILLIMETERS = PHOTO_WIDTH_PIXELS / ZOOM_OUT_MILLIMETER_IN_PIXELS 
 ZOOM_OUT_HEIGHT_MILLIMETERS = PHOTO_HEIGHT_PIXELS / ZOOM_OUT_MILLIMETER_IN_PIXELS  # = 10,24 mm
 
 
-def crop_dots(img):
+def crop_dots(img, window_name):
     height = img.shape[0]
     width = img.shape[1]
+    crop_height = int(0.2 * height)
+    crop_width = width
+    blank_image = np.zeros((crop_height + 6, crop_width + 6, 3), np.uint8)
     crop_img = img[0:int(0.2 * height), 0:width]
-    cv2.imshow("cropped", crop_img)
-    return crop_img
+    merged = merge(blank_image, crop_img, 3, 3)
+    cv2.imshow(f"cropped and merged {window_name}", merged)
+    return merged
+
+
+def merge(background, foreground, x, y):
+    # get position and crop pasting area if needed
+    bg_width = background.shape[0]
+    bg_height = background.shape[1]
+    fr_width = foreground.shape[0]
+    fr_height = foreground.shape[1]
+    width = bg_width - x
+    height = bg_height - y
+    if fr_width < width:
+        width = fr_width
+    if fr_height < height:
+        height = fr_height
+    # normalize alpha channels from 0-255 to 0-1
+    alpha_background = background[x:x + width, y:y + height, 2] / 255.0
+    alpha_foreground = foreground[:width, :height, 2] / 255.0
+    # set adjusted colors
+    for color in range(0, 2):
+        fr = foreground[:width, :height, color]
+        bg = background[x:x + width, y:y + height, color]
+        background[x:x + width, y:y + height, color] = fr + bg
+    # set adjusted alpha and denormalize back to 0-255
+    background[x:x + width, y:y + height, 2] = (1 - (1 - alpha_foreground) * (1 - alpha_background)) * 255
+    return background
 
 
 def crop_sample(img):
@@ -91,7 +120,7 @@ def sharpen(img, wait=False):
 
 def gray_to_binary(gray, tresh, path, wait=False):
     average = gray.mean(axis=0).mean(axis=0)
-    ret, thresholded = cv2.threshold(gray, average - 0.3 * average, 255, cv2.THRESH_BINARY)
+    ret, thresholded = cv2.threshold(gray, average + 0.25 * average, 255, cv2.THRESH_BINARY)
     if wait:
         cv2.imshow(f"gray_to_binary tresh: {tresh} {path}", thresholded)
         cv2.waitKey(0)
@@ -153,6 +182,8 @@ def gray_to_bgr(gray, wait=False):
         cv2.imshow("gray_to_bgr", bgr)
         cv2.waitKey(0)
     return bgr
+
+
 # Find edges using canny edge detector
 # noinspection PyTypeChecker
 
@@ -169,6 +200,8 @@ def detect_edges_sigma_v(gray_img, sigma=0.33, v=202, wait=False):
         cv2.imshow(f"detect_edges_sigma_v sigma={sigma}, v={v}", edged)
         cv2.waitKey(0)
     return edged
+
+
 # Find edges using canny edge detector
 
 
@@ -184,6 +217,8 @@ def detect_edges_auto(gray_img, sigma=0.33, wait=False):
         cv2.imshow(f"detect_edges_auto sigma={sigma}, v={v}, lower={lower}, upper={upper}", edged)
         cv2.waitKey(0)
     return edged
+
+
 # Find edges using canny edge detector
 
 
@@ -436,7 +471,7 @@ def detect_circles(gray, orig):
     cv2.waitKey(0)
 
 
-def find_contours(binary_img, window_name, sort="top-to-bottom", wait=False):
+def find_contours(binary_img, window_name, sort="left-to-right", wait=False):
     contours_list = cv2.findContours(binary_img, cv2.RETR_LIST,
                                      cv2.CHAIN_APPROX_TC89_L1)
     contours_list = imutils.grab_contours(contours_list)
@@ -510,15 +545,15 @@ def find_ref_dots(filtered_boxes, min_px_distance_between_dots, gray, window_nam
     draw_boxes([calibration_dot1, calibration_dot2], orig)
     if calibration_dot1 is None:
         draw_text_info(orig, "NO CALIBRATION DOTS FOUND")
-        cv2.imshow(f"find_ref_dots in {window_name}", orig)
+        cv2.imshow(f"find_ref_dots {window_name}", orig)
         cv2.waitKey(0)
     elif calibration_dot2 is None:
         draw_text_info(orig, "CANT FIND SECOND CALIBRATION DOT")
-        cv2.imshow(f"find_ref_dots in {window_name}", orig)
+        cv2.imshow(f"find_ref_dots {window_name}", orig)
         cv2.waitKey(0)
     else:
         if wait:
-            cv2.imshow(f"find_ref_dots in {window_name}", orig)
+            cv2.imshow(f"find_ref_dots {window_name}", orig)
             cv2.waitKey(0)
     print("calibration_dot1:", calibration_dot1)
     print("calibration_dot2:", calibration_dot2)
@@ -547,7 +582,7 @@ def draw_line_with_label(orig, line, label_above, label_under):
                 2)
 
 
-def calculate_scale(dot1, dot2, ref_dist, gray, window_name, wait=False):
+def calculate_and_draw_scale(dot1, dot2, ref_dist, gray, window_name, wait=False):
     dot1_center = box_center(dot1)
     dot2_center = box_center(dot2)
     line = (dot1_center, dot2_center)
@@ -561,7 +596,7 @@ def calculate_scale(dot1, dot2, ref_dist, gray, window_name, wait=False):
     if wait:
         orig = gray_to_bgr(gray)
         draw_line_with_label(orig, line, label_above, label_under)
-        cv2.imshow(f"find_ref_dots in {window_name}", orig)
+        cv2.imshow(f"calculate_and_draw_scale {window_name}", orig)
         cv2.waitKey(0)
     return scale_one_mm_in_px
 
@@ -634,13 +669,24 @@ def draw_rulers(img, scale_one_mm_in_px, window_name, wait=True):
     return img
 
 
-def save_photo(img_with_a_ruler, path_to_folder, path_to_file):
+def save_photo(img_with_a_ruler, path_to_folder, path_to_file, override=True):
     # path_to_file = folder + file_name
     if not os.path.exists(path_to_folder):
         os.mkdir(path_to_folder)
-    cv2.imwrite(path_to_file, img_with_a_ruler)
-    print("Photo saved to: " + path_to_file)
+    if override:
+        write_image_to_file(img_with_a_ruler, path_to_file)
+    else:
+        if os.path.exists(path_to_file):
+            print("Photo file already exist: " + path_to_file)
+            print("Photo not saved!")
+        else:
+            write_image_to_file(img_with_a_ruler, path_to_file)
     return path_to_file
+
+
+def write_image_to_file(img, path_to_file):
+    cv2.imwrite(path_to_file, img)
+    print("Photo saved to: " + path_to_file)
 
 
 def exif_copy_all_tags(source_file, destination_file):
@@ -663,7 +709,7 @@ def exif_update_resolution_tags(path_to_file, scale):
         f" {path_to_file}")
 
 
-def find_all_jpegs(directory, file_name_contains="", show_file_names=False):
+def find_all_jpegs(directory, file_name_contains="", show_paths=False):
     print(
         f"Przeszukiwanie folderów i podfolderów:\n {directory}\nw poszukiwaniu plików '.jpg' zawierających frazę: '{file_name_contains}'")
     file_counter = 0
@@ -671,12 +717,12 @@ def find_all_jpegs(directory, file_name_contains="", show_file_names=False):
     for root, dirs, files in os.walk(directory):
         if len(files) > 0:
             for file in files:
-                file_path = root + os.path.sep
+                file_folder_path = root + os.path.sep
                 if file.endswith(".jpg") and file_name_contains in file:
-                    found_jpegs.append((file_path, file))
+                    found_jpegs.append((file_folder_path, file))
                     file_counter += 1
-                    if show_file_names:
-                        print(f"{file_counter}. {file}")
+                    if show_paths:
+                        print(f"{file_counter}. {file_folder_path + file}")
 
                 # print(sum(getsize(join(root, name)) for name in files), end="")
                 # print("bytes in", len(files), "non-directory files")
