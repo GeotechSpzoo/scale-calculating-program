@@ -28,6 +28,10 @@ def print_all_tags(source_file):
     subprocess.call(f"exiftool -a -u -g1 {source_file}")
 
 
+def delete_all_tags(source_file):
+    subprocess.call(f"exiftool -all= {source_file}")
+
+
 def set_new_dpmm(dpmm, source_file):
     dpmm_pattern = r"\d+dpmm"
     new_dpmm = f"{dpmm}dpmm"
@@ -53,7 +57,6 @@ def copy_all_tags(source_file, destination_file):
 
 # write_tag_value(xp_comment, "0;graw01;0m;DRY;zoom-in;IR;706dpmm;")
 # set_new_dpmm(123)
-
 
 # subprocess.call(f"exiftool -s -s -s -Artist out.jpg")
 # subprocess.call(f"exiftool -overwrite_original"
