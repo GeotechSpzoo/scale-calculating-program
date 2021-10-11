@@ -40,7 +40,7 @@ def crop_dots(img, window_name):
     blank_image = np.zeros((crop_height + 6, crop_width + 6, 3), np.uint8)
     crop_img = img[0:int(0.2 * height), 0:width]
     merged = merge(blank_image, crop_img, 3, 3)
-    cv2.imshow(f"cropped and merged {window_name}", merged)
+    # cv2.imshow(f"cropped and merged {window_name}", merged)
     return merged
 
 
@@ -69,11 +69,11 @@ def merge(background, foreground, x, y):
     return background
 
 
-def crop_sample(img):
+def crop_sample(img, window_name):
     height = img.shape[0]
     width = img.shape[1]
     crop_img = img[int(0.25 * height):height, 0:width]
-    cv2.imshow("cropped", crop_img)
+    # cv2.imshow(f"cropped sample {window_name}", crop_img)
     return crop_img
 
 
@@ -118,9 +118,12 @@ def sharpen(img, wait=False):
     return sharpened
 
 
-def gray_to_binary(gray, tresh, path, wait=False):
+def gray_to_binary(gray, tresh, path, zoom_in=True, wait=False):
     average = gray.mean(axis=0).mean(axis=0)
-    ret, thresholded = cv2.threshold(gray, average + 0.25 * average, 255, cv2.THRESH_BINARY)
+    if zoom_in:
+        ret, thresholded = cv2.threshold(gray, average - 0.25 * average, 255, cv2.THRESH_BINARY)
+    else:
+        ret, thresholded = cv2.threshold(gray, average + 0.25 * average, 255, cv2.THRESH_BINARY)
     if wait:
         cv2.imshow(f"gray_to_binary tresh: {tresh} {path}", thresholded)
         cv2.waitKey(0)
@@ -492,7 +495,7 @@ def convert_contours_to_min_rect(contours_list, gray, window_name, wait=False):
     if wait:
         orig = gray_to_bgr(gray)
         draw_boxes(boxes, orig)
-        cv2.imshow(f"convert_contours_to_min_rect in {window_name}", orig)
+        cv2.imshow(f"convert_contours_to_min_rect {window_name}", orig)
         cv2.waitKey(0)
     return boxes
 
@@ -506,7 +509,7 @@ def filter_boxes_by_size(boxes, min_size_px, max_size_px, gray, window_name, wai
     if wait:
         orig = gray_to_bgr(gray)
         draw_boxes(filtered_boxes, orig)
-        cv2.imshow(f"filter_boxes_by_size in {window_name}", orig)
+        cv2.imshow(f"filter_boxes_by_size {window_name}", orig)
         cv2.waitKey(0)
     return filtered_boxes
 
@@ -543,20 +546,20 @@ def find_ref_dots(filtered_boxes, min_px_distance_between_dots, gray, window_nam
                 break
     orig = gray_to_bgr(gray)
     draw_boxes([calibration_dot1, calibration_dot2], orig)
-    if calibration_dot1 is None:
-        draw_text_info(orig, "NO CALIBRATION DOTS FOUND")
-        cv2.imshow(f"find_ref_dots {window_name}", orig)
-        cv2.waitKey(0)
-    elif calibration_dot2 is None:
-        draw_text_info(orig, "CANT FIND SECOND CALIBRATION DOT")
-        cv2.imshow(f"find_ref_dots {window_name}", orig)
-        cv2.waitKey(0)
-    else:
-        if wait:
+    if wait:
+        if calibration_dot1 is None:
+            draw_text_info(orig, "NO CALIBRATION DOTS FOUND")
             cv2.imshow(f"find_ref_dots {window_name}", orig)
             cv2.waitKey(0)
-    print("calibration_dot1:", calibration_dot1)
-    print("calibration_dot2:", calibration_dot2)
+        elif calibration_dot2 is None:
+            draw_text_info(orig, "CANT FIND SECOND CALIBRATION DOT")
+            cv2.imshow(f"find_ref_dots {window_name}", orig)
+            cv2.waitKey(0)
+        else:
+            cv2.imshow(f"find_ref_dots {window_name}", orig)
+            cv2.waitKey(0)
+    # print("calibration_dot1:", calibration_dot1)
+    # print("calibration_dot2:", calibration_dot2)
     return calibration_dot1, calibration_dot2
 
 
@@ -582,7 +585,7 @@ def draw_line_with_label(orig, line, label_above, label_under):
                 2)
 
 
-def calculate_and_draw_scale(dot1, dot2, ref_dist, gray, window_name, wait=False):
+def calculate_scale(dot1, dot2, ref_dist, gray, window_name, wait=False):
     dot1_center = box_center(dot1)
     dot2_center = box_center(dot2)
     line = (dot1_center, dot2_center)
@@ -660,11 +663,21 @@ def draw_rulers_with_labels(img, one_mm_in_px, width):
         counter += 1
 
 
-def draw_rulers(img, scale_one_mm_in_px, window_name, wait=True):
+def draw_rulers(img, dot1, dot2, scale_one_mm_in_px, window_name, wait=True):
+    dot1_center = box_center(dot1)
+    dot2_center = box_center(dot2)
+    line = (dot1_center, dot2_center)
+    line_length = dist.euclidean(dot1_center, dot2_center)
+    label_above = "calculated_scale 1 mm = {:.2f} px".format(scale_one_mm_in_px)
+    label_under = "line length = {:.2f} px = ".format(line_length) + "{:.2f} mm".format(
+        line_length / scale_one_mm_in_px)
     height, width, = image_resolution(img)
     draw_rulers_with_labels(img, scale_one_mm_in_px, int(np.maximum(height, width)))
+    draw_line_with_label(img, line, label_above, label_under)
+    draw_box_with_corners(dot1, img)
+    draw_box_with_corners(dot2, img)
+    # cv2.imshow(f"draw_ruler {window_name}", img)
     if wait:
-        cv2.imshow(f"draw_ruler in {window_name}", img)
         cv2.waitKey(0)
     return img
 
@@ -677,8 +690,9 @@ def save_photo(img_with_a_ruler, path_to_folder, path_to_file, override=True):
         write_image_to_file(img_with_a_ruler, path_to_file)
     else:
         if os.path.exists(path_to_file):
-            print("Photo file already exist: " + path_to_file)
-            print("Photo not saved!")
+            # print("Photo file already exist: " + path_to_file)
+            # print("Photo not saved!")
+            pass
         else:
             write_image_to_file(img_with_a_ruler, path_to_file)
     return path_to_file
@@ -686,7 +700,7 @@ def save_photo(img_with_a_ruler, path_to_folder, path_to_file, override=True):
 
 def write_image_to_file(img, path_to_file):
     cv2.imwrite(path_to_file, img)
-    print("Photo saved to: " + path_to_file)
+    # print("Photo saved to: " + path_to_file)
 
 
 def exif_copy_all_tags(source_file, destination_file):
