@@ -323,6 +323,21 @@ def box_center(box):
     return box[0]
 
 
+def box_distance(box1, box2):
+    return dist.euclidean(box_center(box1), box_center(box2))
+
+
+def find_biggest_area_box(boxes):
+    biggest_area = 0
+    biggest_box = None
+    for box in boxes:
+        area = box_area(box)
+        if area > biggest_area:
+            biggest_area = area
+            biggest_box = box
+    return biggest_box
+
+
 def find_contours_and_draw_them(img, edged, window_name, min_size, max_size, show_all=False, wait=False):
     pixels_per_millimeter = None
     # find contours in the edge map
@@ -598,9 +613,6 @@ def find_ref_dots(filtered_boxes, min_px_distance_between_dots, gray, window_nam
         else:
             (dot1_x, dot1_y) = box_center(calibration_dot1)
             (x, y) = box_center(box)
-            # todo center y (vertical) should be smaller than ~200 px from top
-            # todo first dot x (horizontal) should be smaller than ~200 px from top
-            # todo second dot x (horizontal) should be greater than (photo_width - 200 px)
             if np.abs(dot1_x - x) > min_px_distance_between_dots:
                 calibration_dot2 = box
                 break
@@ -621,6 +633,56 @@ def find_ref_dots(filtered_boxes, min_px_distance_between_dots, gray, window_nam
     # print("calibration_dot1:", calibration_dot1)
     # print("calibration_dot2:", calibration_dot2)
     return calibration_dot1, calibration_dot2
+
+
+def find_left_ref_dot(filtered_boxes, gray, is_zoom_in, window_name, wait=False):
+    calibration_dot = None
+    height = gray.shape[0]
+    width = gray.shape[1]
+    for box in filtered_boxes:
+        (box_x, box_y) = box_center(box)
+        (box_size_x, box_size_y) = box_size(box)
+        if box_x > box_size_x / 2 and box_y > height / 4:
+            if box_x < width / 5 and box_y < 3 * height / 4:
+                calibration_dot = box
+                break
+    orig = gray_to_bgr(gray)
+    draw_box_with_corners(calibration_dot, orig)
+    if wait:
+        if calibration_dot is None:
+            # draw_text_info(orig, "NO LEFT CALIBRATION DOT FOUND")
+            # cv2.imshow(f"find_ref_dots {window_name}", orig)
+            # cv2.waitKey(0)
+            pass
+        else:
+            cv2.imshow(f"find_left_ref_dot {window_name}", orig)
+            cv2.waitKey(0)
+    return calibration_dot
+
+
+def find_right_ref_dot(filtered_boxes, gray, is_zoom_in, window_name, wait=False):
+    calibration_dot = None
+    height = gray.shape[0]
+    width = gray.shape[1]
+    for box in filtered_boxes:
+        (box_x, box_y) = box_center(box)
+        (box_size_x, box_size_y) = box_size(box)
+        if box_x > 4 * width / 5 and box_y > height / 4:
+            if box_x < width - box_size_x / 2 and box_y < 3 * height / 4:
+                calibration_dot = box
+                break
+    orig = gray_to_bgr(gray)
+    draw_box_with_corners(calibration_dot, orig)
+    if wait:
+        if calibration_dot is None:
+            # draw_text_info(orig, "NO LEFT CALIBRATION DOT FOUND")
+            # cv2.imshow(f"find_ref_dots {window_name}", orig)
+            # cv2.waitKey(0)
+            pass
+        else:
+            cv2.imshow(f"find_right_ref_dot {window_name}", orig)
+            cv2.waitKey(0)
+    return calibration_dot
 
 
 def draw_line_with_label(orig, line, label_above, label_under):
