@@ -35,12 +35,20 @@ ZOOM_OUT_HEIGHT_MILLIMETERS = PHOTO_HEIGHT_PIXELS / ZOOM_OUT_MILLIMETER_IN_PIXEL
 def crop_dots(img, window_name):
     height = img.shape[0]
     width = img.shape[1]
+    crop_img = img[0:int(0.2 * height), 0:width]
+    # cv2.imshow(f"crop_dots {window_name}", crop_img)
+    return crop_img
+
+
+def crop_dots_with_black_border(img, window_name):
+    height = img.shape[0]
+    width = img.shape[1]
     crop_height = int(0.2 * height)
     crop_width = width
     blank_image = np.zeros((crop_height + 6, crop_width + 6, 3), np.uint8)
     crop_img = img[0:int(0.2 * height), 0:width]
     merged = merge(blank_image, crop_img, 3, 3)
-    # cv2.imshow(f"cropped and merged {window_name}", merged)
+    # cv2.imshow(f"crop_dots_with_black_border {window_name}", merged)
     return merged
 
 
@@ -81,7 +89,15 @@ def close_all_windows():
     cv2.destroyAllWindows()
 
 
-def contrast_increase_clahe(img, wait=False):
+def contrast_increase_clahe_gray(img, wait=False):
+    final = cv2.equalizeHist(img.copy())
+    if wait:
+        cv2.imshow("contrast_increase_clahe_gray", final)
+        cv2.waitKey(0)
+    return final
+
+
+def contrast_increase_clahe_bgr(img, wait=False):
     # -----Converting image to LAB Color model-----------------------------------
     lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
     # cv2.imshow("lab", lab)
@@ -100,7 +116,7 @@ def contrast_increase_clahe(img, wait=False):
     # -----Converting image from LAB Color model to RGB model--------------------
     final = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
     if wait:
-        cv2.imshow("contrast_increase_clahe", final)
+        cv2.imshow("contrast_increase_clahe_bgr", final)
         cv2.waitKey(0)
     # _____END_____#
     return final
@@ -126,6 +142,19 @@ def gray_to_binary(gray, path, tresh=0.0, zoom_in=True, wait=False):
         ret, thresholded = cv2.threshold(gray, average + tresh * average, 255, cv2.THRESH_BINARY)
     if wait:
         cv2.imshow(f"gray_to_binary tresh: {tresh} {path}", thresholded)
+        cv2.waitKey(0)
+    return thresholded
+
+
+def gray_to_binary_adaptive(gray, path, block_size=3, tresh=1, zoom_in=True, wait=False):
+    average = gray.mean(axis=0).mean(axis=0)
+    # block_size = 2 * tresh + 1
+    if zoom_in:
+        thresholded = cv2.adaptiveThreshold(gray, 255, cv2.BORDER_REPLICATE, cv2.THRESH_BINARY, block_size, tresh)
+    else:
+        thresholded = cv2.adaptiveThreshold(gray, 255, cv2.BORDER_REPLICATE, cv2.THRESH_BINARY, block_size, tresh)
+    if wait:
+        cv2.imshow(f"gray_to_binary_adaptive tresh: {tresh} {path}", thresholded)
         cv2.waitKey(0)
     return thresholded
 
@@ -507,7 +536,7 @@ def detect_circles(gray, orig):
 
 def find_contours(binary_img, window_name, sort="left-to-right", wait=False):
     contours_list = cv2.findContours(binary_img, cv2.RETR_LIST,
-                                     cv2.CHAIN_APPROX_TC89_L1)
+                                     cv2.CHAIN_APPROX_NONE)
     contours_list = imutils.grab_contours(contours_list)
     if len(contours_list) > 0:
         (contours_list, _) = cont.sort_contours(contours_list, method=sort)

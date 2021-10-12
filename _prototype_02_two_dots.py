@@ -33,16 +33,20 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     # gray = f.bgr_to_gray(crop)
     gray = f.bgr_to_custom_gray(crop)
     blurred = f.blur_bilateral_filter_min(gray, "")
+    blurred = f.contrast_increase_clahe_gray(blurred, wait=True)
     for i in range(35):
         blurred = f.blur_bilateral_filter_min(blurred, "")
-    blurred = f.blur_bilateral_filter_min(blurred, input_file, wait=wait)
+        blurred = f.contrast_increase_clahe_gray(blurred)
+    blurred = f.blur_bilateral_filter_min(blurred, input_file, wait=True)
+    # for c in range(0, 20):
+    blurred = f.contrast_increase_clahe_gray(blurred, wait=True)
     dots_found = False
     dot1, dot2 = None, None
-    for tresh in range(0, 30):
-        binary = f.gray_to_binary(blurred, input_file, tresh / 100, is_zoom_in, wait=wait)
+    for tresh in range(0, 100, 5):
+        binary = f.gray_to_binary(blurred, input_file, tresh / 100, is_zoom_in, wait=True)
         edged = f.detect_edges_raw_canny(binary, 25, 100, input_file)
         contours = f.find_contours(edged, input_file)
-        boxes = f.convert_contours_to_min_rect(contours, gray, input_file, wait=wait)
+        boxes = f.convert_contours_to_min_rect(contours, gray, input_file, wait=True)
         filtered_boxes = f.filter_boxes_by_size(boxes, MIN_CAL_DOT_SIZE_IN_PX, MAX_CAL_DOT_SIZE_IN_PX, gray,
                                                 input_file, wait=wait)
         dot1, dot2 = f.find_ref_dots(filtered_boxes, MIN_DISTANCE_BETWEEN_DOTS_IN_PX, gray, input_file, wait=wait)
