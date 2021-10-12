@@ -846,6 +846,11 @@ def exif_update_resolution_tags(path_to_file, scale):
         f" {path_to_file}")
 
 
+def add_scale_to_file_name(output_samples_path_to_file, calculated_scale_one_mm_in_px):
+    new_name = output_samples_path_to_file.replace(".jpg", "_{:.0f}dpmm.jpg".format(calculated_scale_one_mm_in_px))
+    os.rename(output_samples_path_to_file, new_name)
+
+
 def find_all_jpegs(directory, file_name_contains="", show_paths=False):
     print(
         f"Przeszukiwanie folderów i podfolderów:\n {directory}\nw poszukiwaniu plików '.jpg' zawierających frazę: '{file_name_contains}'")

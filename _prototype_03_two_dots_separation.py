@@ -34,10 +34,12 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     crop = f.crop_dots(img, input_file)
     crop_sample = f.crop_sample(img, input_file)
     output_samples_folder = main_subject_folder + "_samples"
+    output_samples_path_to_file = output_samples_folder + "\\" + photo_file_name
     f.save_photo(crop_sample,
                  output_samples_folder,
-                 output_samples_folder + "\\" + photo_file_name,
+                 output_samples_path_to_file,
                  override=False)
+    f.exif_copy_all_tags(input_file, output_samples_path_to_file)
     # gray = f.bgr_to_gray(crop)
     gray = f.bgr_to_custom_gray(crop)
     blurred = f.blur_bilateral_filter_min(gray, "")
@@ -86,10 +88,11 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     if ref_left_dot and ref_right_dot is not None:
         dots_found = True
     if not dots_found:
-        if ref_left_dot is None:
-            abort_message("REF OBJECT (calibration_dot1) NOT FOUND!")
-        elif ref_right_dot is None:
-            abort_message("REF OBJECT (calibration_dot2) NOT FOUND!")
+        if len(left_dots) == 0:
+            abort_message("LEFT CALIBRATION DOT NOT FOUND!")
+        if len(right_dots) == 0:
+            abort_message("RIGHT CALIBRATION DOT NOT FOUND!")
+        print("Scale cannot be calculated.")
         return -1
     if is_zoom_in:
         calculated_scale_one_mm_in_px = f.calculate_scale(ref_left_dot, ref_right_dot, ZOOM_IN_REF_LINE_LENGTH_IN_MM,
@@ -109,12 +112,13 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     f.save_photo(img_with_a_ruler, output_folder, output_path_to_file, override=True)
     f.exif_copy_all_tags(input_file, output_path_to_file)
     f.exif_update_resolution_tags(output_path_to_file, calculated_scale_one_mm_in_px)
+    f.exif_update_resolution_tags(output_samples_path_to_file, calculated_scale_one_mm_in_px)
+    f.add_scale_to_file_name(output_samples_path_to_file, calculated_scale_one_mm_in_px)
     return calculated_scale_one_mm_in_px
 
 
 def abort_message(message):
     print(message)
-    print("Scale cannot be calculated.")
 
 
 found_jpegs = []
