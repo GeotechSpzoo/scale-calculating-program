@@ -835,15 +835,15 @@ def exif_update_resolution_tags(path_to_file, scale):
     formatted_scale = "{:.0f}".format(scale)
     comment = exif.read_tag_value("UserComment", path_to_file)
     final_comment = f"{comment}calc{formatted_scale}dpmm;"
-    subprocess.call(
-        f"exiftool -q -q -overwrite_original"
-        f" -XResolution={dpi}"
-        f" -YResolution={dpi}"
-        f" -ResolutionUnit=inches"
-        f" -ProcessingSoftware=PythonOpenCV"
-        f" -XPComment={final_comment}"
-        f" -UserComment={final_comment}"
-        f" {path_to_file}")
+    args = f"exiftool -q -q -overwrite_original"
+    f" -XResolution={dpi}"
+    f" -YResolution={dpi}"
+    f" -ResolutionUnit=inches"
+    f" -ProcessingSoftware=PythonOpenCV"
+    f" -XPComment={final_comment}"
+    f" -UserComment={final_comment}"
+    f" {path_to_file}"
+    subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
 
 def add_scale_to_file_name(output_samples_path_to_file, calculated_scale_one_mm_in_px):

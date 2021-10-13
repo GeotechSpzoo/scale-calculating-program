@@ -29,7 +29,7 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     global output_folder, output_samples_folder
     is_zoom_in = ZOOM_IN in file_name
     input_file = path_to_photo_folder + photo_file_name
-    print(f"Calculating scale for: {input_file}\n")
+    print(f"Calculating scale for:\n {input_file}\n")
     wait = False
     img = f.load_image(input_file)
     crop = f.crop_dots(img, input_file)
@@ -133,6 +133,7 @@ def get_input(message):
 
 
 def end_program(message):
+    finish_message()
     input(message + "\n")
     exit(0)
 
@@ -153,7 +154,7 @@ def request_path_to_find_photos():
 #     pass
 
 photos_number_to_proceed = 0
-current_photo_index = 1
+current_photo_index = 0
 calculated_photos = []
 file_name = ""
 
@@ -165,17 +166,21 @@ def find_photos():
 def proceed_scale_calculation():
     global file_name, current_photo_index
     for (file_folder_path, file_name) in found_jpegs:
+        current_photo_index += 1
         print_line()
         print(f"Photo {current_photo_index} of {photos_number_to_proceed}...")
         calculated_scale = calculate_scale(file_folder_path, main_folder, file_name)
-        current_photo_index += 1
         if calculated_scale != -1:
             calculated_photos.append((file_name, calculated_scale))
-    print_line()
-    print(f"{len(calculated_photos)} of {photos_number_to_proceed} photos calculated.")
-    print(f"Output paths:\n{output_folder}\n{output_samples_folder}")
+    # finish_message()
     f.close_all_windows()
     f.create_report(output_folder, calculated_photos, photos_number_to_proceed)
+
+
+def finish_message():
+    print_line()
+    print(f"Scale found in {len(calculated_photos)} of {current_photo_index} processed photos.")
+    print(f"Output paths:\n{output_folder}\n{output_samples_folder}")
 
 
 def print_line():
@@ -189,6 +194,7 @@ def start_program():
         get_input("Naciśnij ENTER aby rozpocząć kalkulację skali zdjęć lub wpisz 'q' aby anulować...")
         print("Rozpoczęto analizę zdjęć...")
         proceed_scale_calculation()
+        print_line()
         print("Zakończono analizę zdjęć.")
     else:
         print_line()
@@ -200,15 +206,16 @@ def start_program():
 
 try:
     start_program()
-    get_input("Koniec porgramu...")
-except Exception as e:
+except (Exception, KeyboardInterrupt, OSError) as e:
     print_line()
     print(f"\nERROR\n{e}\nERROR\n")
     if "WinError 2" in str(e):
         print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania.")
         print("\tŚciągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.")
     print_line()
-    end_program("Złapano wyjątek. Program został przerwany...")
+    print("Złapano wyjątek. Program został przerwany...")
+finally:
+    end_program("Koniec programu...")
 
 # COMPILE COMMAND: 'pyinstaller --onefile --windowed _prototype_03_two_dots_separation.py'
 # COMPILE COMMAND: 'pyinstaller --onefile _prototype_03_two_dots_separation.py'

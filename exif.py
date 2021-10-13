@@ -16,21 +16,23 @@ def read_tag_value(tag, source_file):
 def write_tag_value(tag, value, source_file):
     write_args = ["exiftool", "-overwrite_original", f"-{tag}={value}", f"{source_file}"]
     print(f"Exif write: {tag} = {value}")
-    subprocess.call(write_args)
+    subprocess.Popen(write_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
     # print_tag_value(tag, source_file)
 
 
 def print_tag_value(tag, source_file):
     read_args = ["exiftool", f"-{tag}", f"{source_file}"]
-    subprocess.call(read_args, source_file)
+    subprocess.Popen(read_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
 
 def print_all_tags(source_file):
-    subprocess.call(f"exiftool -a -u -g1 {source_file}")
+    args = f"exiftool -a -u -g1 {source_file}"
+    subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
 
 def delete_all_tags(source_file):
-    subprocess.call(f"exiftool -all= {source_file}")
+    args = f"exiftool -all= {source_file}"
+    subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
 
 def set_new_dpmm(dpmm, source_file):
@@ -54,8 +56,8 @@ def is_blank(my_string):
 
 
 def copy_all_tags(source_file, destination_file):
-    subprocess.call(
-        f"exiftool -q -q -overwrite_original -TagsFromFile {source_file} -all:all>all:all {destination_file}")
+    args = f"exiftool -q -q -overwrite_original -TagsFromFile {source_file} -all:all>all:all {destination_file}"
+    subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
 # write_tag_value(xp_comment, "0;graw01;0m;DRY;zoom-in;IR;706dpmm;")
 # set_new_dpmm(123)
