@@ -9,7 +9,7 @@ def read_tag_value(tag, source_file):
     args = ["exiftool", "-s", "-s", "-s", f"-{tag}", f"{source_file}"]
     process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     out, err = process.communicate()
-    print(f"Exif read: {tag} = {out}")
+    # print(f"Exif read: {tag} = {out}")
     return out
 
 

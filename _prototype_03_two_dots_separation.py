@@ -28,7 +28,7 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     global output_folder, output_samples_folder
     is_zoom_in = ZOOM_IN in file_name
     input_file = path_to_photo_folder + photo_file_name
-    print(f"Calculating scale for: {input_file}")
+    print(f"Calculating scale for: {input_file}\n")
     wait = False
     img = f.load_image(input_file)
     crop = f.crop_dots(img, input_file)
@@ -89,9 +89,9 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
         dots_found = True
     if not dots_found:
         if len(left_dots) == 0:
-            abort_message("LEFT CALIBRATION DOT NOT FOUND!")
+            abort_message("\nLEFT CALIBRATION DOT NOT FOUND!")
         if len(right_dots) == 0:
-            abort_message("RIGHT CALIBRATION DOT NOT FOUND!")
+            abort_message("\nRIGHT CALIBRATION DOT NOT FOUND!")
         print("Scale cannot be calculated.")
         return -1
     if is_zoom_in:
@@ -124,12 +124,28 @@ def abort_message(message):
 found_jpegs = []
 
 default_path_to_search = "C:\\Users\\pawel.drelich\\Desktop\\Materialy\\AnalizaObrazu\\SamplePhotosLabo\\3144"
+path_to_photos = ""
+
+
+def get_input(message):
+    result = input(message + "\n")
+    if result == "q":
+        end_program("Program przerwany przez użytkownika...")
+    else:
+        return result
+
+
+def end_program(message):
+    input(message + "\n")
+    exit(0)
 
 
 def request_path_to_find_photos():
-    global found_jpegs
-    # pathToPhotos = input("Podej mnie ten ścieżek do zdjęciówek:\n")
-    found_jpegs = f.find_all_jpegs(default_path_to_search)
+    global found_jpegs, path_to_photos
+    path_to_photos = get_input("Podej mnie ten ścieżek do zdjęciówek:")
+    phrase_to_include_in_file_name = get_input(
+        "Podej mnie tę frazę, którą powinna zawierać nazwa pliku, abo walnij ENTERem aby nie flirtować plików:")
+    found_jpegs = f.find_all_jpegs(path_to_photos, phrase_to_include_in_file_name)
     return len(found_jpegs)
 
 
@@ -141,25 +157,59 @@ def request_path_to_find_photos():
 photos_number_to_proceed = 0
 current_photo_index = 1
 calculated_photos = []
+file_name = ""
 
 
 def find_photos():
-    global photos_number_to_proceed
-    photos_number_to_proceed = request_path_to_find_photos()
+    return request_path_to_find_photos()
 
 
-find_photos()
+def proceed_scale_calculation():
+    global file_name, current_photo_index
+    for (file_folder_path, file_name) in found_jpegs:
+        print_line()
+        print(f"Photo {current_photo_index} of {photos_number_to_proceed}...")
+        calculated_scale = calculate_scale(file_folder_path, path_to_photos, file_name)
+        current_photo_index += 1
+        if calculated_scale != -1:
+            calculated_photos.append((file_name, calculated_scale))
+    print_line()
+    print(f"{len(calculated_photos)} of {photos_number_to_proceed} photos calculated.")
+    print(f"Output paths:\n{output_folder}\n{output_samples_folder}")
+    f.close_all_windows()
 
-for (file_folder_path, file_name) in found_jpegs:
+
+def print_line():
     print("---------------------------------------")
-    print(f"Photo {current_photo_index} of {photos_number_to_proceed}...")
-    calculated_scale = calculate_scale(file_folder_path, default_path_to_search, file_name)
-    current_photo_index += 1
-    if calculated_scale != -1:
-        calculated_photos.append((file_name, calculated_scale))
 
-print("---------------------------------------")
-print(f"{len(calculated_photos)} of {photos_number_to_proceed} photos calculated.")
-print(f"Output paths:\n{output_folder}\n{output_samples_folder}")
 
-f.close_all_windows()
+def start_program():
+    global photos_number_to_proceed
+    photos_number_to_proceed = find_photos()
+    try:
+        if photos_number_to_proceed > 0:
+            get_input("Naciśnij ENTER aby rozpocząć lub wpisz 'q' aby anulować...")
+            print("Rozpoczęto analizę zdjęć...")
+            proceed_scale_calculation()
+            print("Zakończono analizę zdjęć.")
+        else:
+            print_line()
+            print("Nie znaleziono żadnych zdjęć.")
+            print(
+                "Upewnij się że podana ścieżka jest prawidłowa i spróbuj ponownie lub wpisz 'q' aby wyjść z programu.")
+            start_program()
+    except Exception as e:
+        print_line()
+        print(f"\nERROR\n{e}\nERROR\n")
+        if "WinError 2" in str(e):
+            print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania.")
+            print("\tŚciągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.")
+        print_line()
+        end_program("Złapano wyjątek. Program został przerwany...")
+
+
+start_program()
+get_input("Koniec porgramu.")
+
+# COMPILE COMMAND: 'pyinstaller --onefile --windowed _prototype_03_two_dots_separation.py'
+# COMPILE COMMAND: 'pyinstaller --onefile _prototype_03_two_dots_separation.py'

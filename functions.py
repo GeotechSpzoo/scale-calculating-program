@@ -714,8 +714,8 @@ def calculate_scale(dot1, dot2, ref_dist, gray, window_name, wait=False):
     line_length = dist.euclidean(dot1_center, dot2_center)
     scale_one_mm_in_px = line_length / ref_dist
     label_above = "calculated_scale 1 mm = {:.2f} px".format(scale_one_mm_in_px)
-    print(label_above)
-    print(f"calculate_scaled 100 px = {100 / scale_one_mm_in_px} mm")
+    print("\n" + label_above)
+    # print(f"calculate_scaled 100 px = {100 / scale_one_mm_in_px} mm")
     label_under = "line length = {:.2f} px = ".format(line_length) + "{:.2f} mm".format(
         line_length / scale_one_mm_in_px)
     if wait:
@@ -848,12 +848,13 @@ def exif_update_resolution_tags(path_to_file, scale):
 
 def add_scale_to_file_name(output_samples_path_to_file, calculated_scale_one_mm_in_px):
     new_name = output_samples_path_to_file.replace(".jpg", "_{:.0f}dpmm.jpg".format(calculated_scale_one_mm_in_px))
-    os.rename(output_samples_path_to_file, new_name)
+    if not os.path.exists(new_name):
+        os.rename(output_samples_path_to_file, new_name)
 
 
 def find_all_jpegs(directory, file_name_contains="", show_paths=False):
     print(
-        f"Przeszukiwanie folderów i podfolderów:\n {directory}\nw poszukiwaniu plików '.jpg' zawierających frazę: '{file_name_contains}'")
+        f"Przeszukiwanie folderów i podfolderów:\n {directory}\n\nw poszukiwaniu plików '.jpg' zawierających frazę: '{file_name_contains}'")
     file_counter = 0
     found_jpegs = []
     for root, dirs, files in os.walk(directory):
