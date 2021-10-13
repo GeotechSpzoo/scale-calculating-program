@@ -1,4 +1,5 @@
 import numpy as np
+from sys import exit
 
 import functions as f
 
@@ -144,7 +145,7 @@ def request_path_to_find_photos():
     global found_jpegs, path_to_photos
     path_to_photos = get_input("Podej mnie ten ścieżek do zdjęciówek:")
     phrase_to_include_in_file_name = get_input(
-        "Podej mnie tę frazę, którą powinna zawierać nazwa pliku, abo walnij ENTERem aby nie flirtować plików:")
+        "Podej mnie ten frazes, który powinin zawierać się w nazwie plyku, abo walnij ENTERem aby nie flirtować plików:")
     found_jpegs = f.find_all_jpegs(path_to_photos, phrase_to_include_in_file_name)
     return len(found_jpegs)
 
@@ -186,30 +187,30 @@ def print_line():
 def start_program():
     global photos_number_to_proceed
     photos_number_to_proceed = find_photos()
-    try:
-        if photos_number_to_proceed > 0:
-            get_input("Naciśnij ENTER aby rozpocząć lub wpisz 'q' aby anulować...")
-            print("Rozpoczęto analizę zdjęć...")
-            proceed_scale_calculation()
-            print("Zakończono analizę zdjęć.")
-        else:
-            print_line()
-            print("Nie znaleziono żadnych zdjęć.")
-            print(
-                "Upewnij się że podana ścieżka jest prawidłowa i spróbuj ponownie lub wpisz 'q' aby wyjść z programu.")
-            start_program()
-    except Exception as e:
+    if photos_number_to_proceed > 0:
+        get_input("Naciśnij ENTER aby rozpocząć lub wpisz 'q' aby anulować...")
+        print("Rozpoczęto analizę zdjęć...")
+        proceed_scale_calculation()
+        print("Zakończono analizę zdjęć.")
+    else:
         print_line()
-        print(f"\nERROR\n{e}\nERROR\n")
-        if "WinError 2" in str(e):
-            print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania.")
-            print("\tŚciągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.")
-        print_line()
-        end_program("Złapano wyjątek. Program został przerwany...")
+        print("Nie znaleziono żadnych zdjęć.")
+        print(
+            "Upewnij się że podana ścieżka jest prawidłowa i spróbuj ponownie lub wpisz 'q' aby wyjść z programu.")
+        start_program()
 
 
-start_program()
-get_input("Koniec porgramu.")
+try:
+    start_program()
+    get_input("Koniec porgramu.")
+except Exception as e:
+    print_line()
+    print(f"\nERROR\n{e}\nERROR\n")
+    if "WinError 2" in str(e):
+        print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania.")
+        print("\tŚciągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.")
+    print_line()
+    end_program("Złapano wyjątek. Program został przerwany...")
 
 # COMPILE COMMAND: 'pyinstaller --onefile --windowed _prototype_03_two_dots_separation.py'
 # COMPILE COMMAND: 'pyinstaller --onefile _prototype_03_two_dots_separation.py'

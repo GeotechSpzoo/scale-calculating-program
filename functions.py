@@ -714,7 +714,7 @@ def calculate_scale(dot1, dot2, ref_dist, gray, window_name, wait=False):
     line_length = dist.euclidean(dot1_center, dot2_center)
     scale_one_mm_in_px = line_length / ref_dist
     label_above = "calculated_scale 1 mm = {:.2f} px".format(scale_one_mm_in_px)
-    print("\n" + label_above)
+    print("\n" + label_above + "\n")
     # print(f"calculate_scaled 100 px = {100 / scale_one_mm_in_px} mm")
     label_under = "line length = {:.2f} px = ".format(line_length) + "{:.2f} mm".format(
         line_length / scale_one_mm_in_px)
