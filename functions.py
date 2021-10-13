@@ -843,7 +843,8 @@ def exif_update_resolution_tags(path_to_file, scale):
     f" -XPComment={final_comment}"
     f" -UserComment={final_comment}"
     f" {path_to_file}"
-    subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                     universal_newlines=True)
 
 
 def add_scale_to_file_name(output_samples_path_to_file, calculated_scale_one_mm_in_px):

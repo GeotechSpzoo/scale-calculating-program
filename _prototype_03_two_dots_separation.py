@@ -213,7 +213,7 @@ except (Exception, KeyboardInterrupt, OSError) as e:
         print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania.")
         print("\tŚciągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.")
     print_line()
-    print("Złapano wyjątek. Program został przerwany...")
+    print("Złapano wyjątek. Program został zatrzymany")
 finally:
     end_program("Koniec programu...")
 
