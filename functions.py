@@ -714,7 +714,7 @@ def calculate_scale(dot1, dot2, ref_dist, gray, window_name, wait=False):
     line_length = dist.euclidean(dot1_center, dot2_center)
     scale_one_mm_in_px = line_length / ref_dist
     label_above = "calculated_scale 1 mm = {:.2f} px".format(scale_one_mm_in_px)
-    print("\n" + label_above + "\n")
+    print(label_above)
     # print(f"calculate_scaled 100 px = {100 / scale_one_mm_in_px} mm")
     label_under = "line length = {:.2f} px = ".format(line_length) + "{:.2f} mm".format(
         line_length / scale_one_mm_in_px)
@@ -836,7 +836,7 @@ def exif_update_resolution_tags(path_to_file, scale):
     comment = exif.read_tag_value("UserComment", path_to_file)
     final_comment = f"{comment}calc{formatted_scale}dpmm;"
     subprocess.call(
-        f"exiftool -overwrite_original"
+        f"exiftool -q -q -overwrite_original"
         f" -XResolution={dpi}"
         f" -YResolution={dpi}"
         f" -ResolutionUnit=inches"
@@ -854,7 +854,7 @@ def add_scale_to_file_name(output_samples_path_to_file, calculated_scale_one_mm_
 
 def find_all_jpegs(directory, file_name_contains="", show_paths=False):
     print(
-        f"Przeszukiwanie folderów i podfolderów:\n {directory}\n\nw poszukiwaniu plików '.jpg' zawierających frazę: '{file_name_contains}'")
+        f"Skanowanie folderów i podfolderów w poszukiwaniu plików '.jpg' zawierających frazę: '{file_name_contains}'\n {directory}\n")
     file_counter = 0
     found_jpegs = []
     for root, dirs, files in os.walk(directory):
@@ -875,8 +875,9 @@ def find_all_jpegs(directory, file_name_contains="", show_paths=False):
                 #     print(file)
                 # for dir in dirs:
                 #     print(dir)
-    print(f"Znaleziono: {file_counter} plików.")
+    print(f"Znaleziono: {file_counter} plików.\n")
     return found_jpegs
+
 
 # img = load_image("bgr_to_gray.png")
 # cv2.imshow("test", img)
@@ -884,3 +885,15 @@ def find_all_jpegs(directory, file_name_contains="", show_paths=False):
 # gray = bgr_to_custom_gray(img, wait=True)
 # gray = bgr_to_gray(img, wait=True)
 # cv2.waitKey(0)
+
+
+def create_report(path, calculated_photos, all_photos_number):
+    report_file_path = path + os.path.sep + "report.txt"
+    report_content = f"{len(calculated_photos)} of {all_photos_number} photos with scale calculated:\n"
+    counter = 1
+    for (file_name, scale) in calculated_photos:
+        file_name = file_name.replace(".jpg", "_{:.0f}dpmm.jpg".format(scale))
+        report_content = report_content + f"{counter}. {file_name}\n"
+        counter += 1
+    with open(report_file_path, 'w') as report:
+        report.write(report_content)

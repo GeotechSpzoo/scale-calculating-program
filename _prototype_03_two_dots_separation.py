@@ -90,9 +90,9 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
         dots_found = True
     if not dots_found:
         if len(left_dots) == 0:
-            abort_message("\nLEFT CALIBRATION DOT NOT FOUND!")
+            print("LEFT CALIBRATION DOT NOT FOUND!")
         if len(right_dots) == 0:
-            abort_message("\nRIGHT CALIBRATION DOT NOT FOUND!")
+            print("RIGHT CALIBRATION DOT NOT FOUND!")
         print("Scale cannot be calculated.")
         return -1
     if is_zoom_in:
@@ -118,14 +118,10 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     return calculated_scale_one_mm_in_px
 
 
-def abort_message(message):
-    print(message)
-
-
 found_jpegs = []
 
 default_path_to_search = "C:\\Users\\pawel.drelich\\Desktop\\Materialy\\AnalizaObrazu\\SamplePhotosLabo\\3144"
-path_to_photos = ""
+main_folder = ""
 
 
 def get_input(message):
@@ -142,11 +138,12 @@ def end_program(message):
 
 
 def request_path_to_find_photos():
-    global found_jpegs, path_to_photos
-    path_to_photos = get_input("Podej mnie ten ścieżek do zdjęciówek:")
+    global found_jpegs, main_folder
+    main_folder = get_input("Podej mnie ten ścieżek do zdjęciówek:")
     phrase_to_include_in_file_name = get_input(
-        "Podej mnie ten frazes, który powinin zawierać się w nazwie plyku, abo walnij ENTERem aby nie flirtować plików:")
-    found_jpegs = f.find_all_jpegs(path_to_photos, phrase_to_include_in_file_name)
+        "Podej mnie ten frazes, który powinin zawierać się w nazwie plyku, abo walnij ENTERem aby nie flirtować plików:"
+    )
+    found_jpegs = f.find_all_jpegs(main_folder, phrase_to_include_in_file_name)
     return len(found_jpegs)
 
 
@@ -170,7 +167,7 @@ def proceed_scale_calculation():
     for (file_folder_path, file_name) in found_jpegs:
         print_line()
         print(f"Photo {current_photo_index} of {photos_number_to_proceed}...")
-        calculated_scale = calculate_scale(file_folder_path, path_to_photos, file_name)
+        calculated_scale = calculate_scale(file_folder_path, main_folder, file_name)
         current_photo_index += 1
         if calculated_scale != -1:
             calculated_photos.append((file_name, calculated_scale))
@@ -178,6 +175,7 @@ def proceed_scale_calculation():
     print(f"{len(calculated_photos)} of {photos_number_to_proceed} photos calculated.")
     print(f"Output paths:\n{output_folder}\n{output_samples_folder}")
     f.close_all_windows()
+    f.create_report(output_folder, calculated_photos, photos_number_to_proceed)
 
 
 def print_line():
@@ -188,7 +186,7 @@ def start_program():
     global photos_number_to_proceed
     photos_number_to_proceed = find_photos()
     if photos_number_to_proceed > 0:
-        get_input("Naciśnij ENTER aby rozpocząć lub wpisz 'q' aby anulować...")
+        get_input("Naciśnij ENTER aby rozpocząć kalkulację skali zdjęć lub wpisz 'q' aby anulować...")
         print("Rozpoczęto analizę zdjęć...")
         proceed_scale_calculation()
         print("Zakończono analizę zdjęć.")
@@ -202,7 +200,7 @@ def start_program():
 
 try:
     start_program()
-    get_input("Koniec porgramu.")
+    get_input("Koniec porgramu...")
 except Exception as e:
     print_line()
     print(f"\nERROR\n{e}\nERROR\n")

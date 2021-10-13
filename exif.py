@@ -54,7 +54,8 @@ def is_blank(my_string):
 
 
 def copy_all_tags(source_file, destination_file):
-    subprocess.call(f"exiftool -overwrite_original -TagsFromFile {source_file} -all:all>all:all {destination_file}")
+    subprocess.call(
+        f"exiftool -q -q -overwrite_original -TagsFromFile {source_file} -all:all>all:all {destination_file}")
 
 # write_tag_value(xp_comment, "0;graw01;0m;DRY;zoom-in;IR;706dpmm;")
 # set_new_dpmm(123)
