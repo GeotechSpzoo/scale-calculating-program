@@ -24,7 +24,7 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     wait = False
     img = f.load_image(input_file)
     crop = f.crop_dots(img, input_file)
-    crop_sample = f.crop_sample(img, input_file)
+    crop_sample = f.crop_document(img, input_file)
     output_samples_folder = main_subject_folder + "_samples"
     f.save_photo(crop_sample,
                  output_samples_folder,
@@ -69,8 +69,8 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     else:
         calculated_scale_one_mm_in_px = f.calculate_scale(dot1, dot2, ZOOM_OUT_REF_LINE_LENGTH_IN_MM, gray,
                                                           input_file, wait=wait)
-    img_with_a_ruler = f.draw_result_img(img, dot1, dot2, calculated_scale_one_mm_in_px, input_file, wait=wait,
-                                         show_image=wait)
+    img_with_a_ruler = f.draw_calculated_img(img, dot1, dot2, calculated_scale_one_mm_in_px, input_file, wait=wait,
+                                             show_image=wait)
     output_folder = main_subject_folder + "_scale_calculated\\"
     output_file_name = "ruler_" + photo_file_name.replace(".jpg",
                                                           "_{:.0f}dpmm.jpg".format(calculated_scale_one_mm_in_px))

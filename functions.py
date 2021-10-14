@@ -23,7 +23,7 @@ TWO_DOTS_PX_MIN_DIST = 500  # 1mm = 706px
 
 ZOOM_IN_OUT_FACTOR = 7  # more precise = 7,067
 
-ZOOM_IN_MILLIMETER_IN_PIXELS = 760  # 1mm = 760px
+ZOOM_IN_MILLIMETER_IN_PIXELS = 765  # 1mm = 765px
 ZOOM_IN_WIDTH_MILLIMETERS = PHOTO_WIDTH_PIXELS / ZOOM_IN_MILLIMETER_IN_PIXELS  # = 1,81 mm
 ZOOM_IN_HEIGHT_MILLIMETERS = PHOTO_HEIGHT_PIXELS / ZOOM_IN_MILLIMETER_IN_PIXELS  # = 1,45 mm
 
@@ -81,10 +81,18 @@ def merge(background, foreground, x, y):
     return background
 
 
-def crop_sample(img, window_name):
+def crop_document(img, window_name):
     height = img.shape[0]
     width = img.shape[1]
     crop_img = img[int(0.25 * height):height, 0:width]
+    # cv2.imshow(f"cropped sample {window_name}", crop_img)
+    return crop_img
+
+
+def crop_ai(img, window_name):
+    height = img.shape[0]
+    width = img.shape[1]
+    crop_img = img[int(2 * height / 6):int(5 * height / 6), int(width / 6):int(5 * width / 6)]
     # cv2.imshow(f"cropped sample {window_name}", crop_img)
     return crop_img
 
@@ -748,10 +756,13 @@ RULER_LABEL_THICKNESS = 2
 RULER_05_LABEL_LIMIT_PX = 200
 
 
-def draw_rulers_with_labels(img, one_mm_in_px, width):
+def draw_rulers_with_labels(original_img, one_mm_in_px):
+    img = original_img.copy()
     i = 0
     counter = 0
-    while i < width:
+    height, width, = image_resolution(img)
+    max_length = int(np.maximum(height, width))
+    while i < max_length:
         if counter % 100 == 0:
             # horizontal
             cv2.line(img, (int(i), 0), (int(i), RULER_LINE_LENGTH_VERY_LONG), RULER_LABEL_COLOR,
@@ -787,9 +798,11 @@ def draw_rulers_with_labels(img, one_mm_in_px, width):
             cv2.line(img, (0, int(i)), (RULER_LINE_LENGTH_SHORT, int(i)), RULER_LINE_COLOR, RULER_THICKNESS_LIGHT)
         i += one_mm_in_px / 100
         counter += 1
+    return img
 
 
-def draw_result_img(img, dot1, dot2, scale_one_mm_in_px, window_name, wait=False, show_image=False):
+def draw_calculated_img(original_img, dot1, dot2, scale_one_mm_in_px, window_name, wait=False, show_image=False):
+    img = original_img.copy()
     dot1_center = box_center(dot1)
     dot2_center = box_center(dot2)
     line = (dot1_center, dot2_center)
@@ -797,8 +810,7 @@ def draw_result_img(img, dot1, dot2, scale_one_mm_in_px, window_name, wait=False
     label_above = "calculated_scale 1 mm = {:.2f} px".format(scale_one_mm_in_px)
     label_under = "line length = {:.2f} px = ".format(line_length) + "{:.2f} mm".format(
         line_length / scale_one_mm_in_px)
-    height, width, = image_resolution(img)
-    draw_rulers_with_labels(img, scale_one_mm_in_px, int(np.maximum(height, width)))
+    img = draw_rulers_with_labels(img, scale_one_mm_in_px)
     draw_line_with_label(img, line, label_above, label_under)
     draw_box_with_corners(dot1, img)
     draw_box_with_corners(dot2, img)
@@ -834,21 +846,24 @@ def exif_copy_all_tags(source_file, destination_file):
     exif.copy_all_tags(source_file, destination_file)
 
 
-def exif_update_resolution_tags(path_to_file, scale):
-    dpi = 25.4 * scale
-    formatted_scale = "{:.0f}".format(scale)
-    comment = exif.read_tag_value("UserComment", path_to_file)
-    final_comment = f"{comment}calc{formatted_scale}dpmm;"
-    args = f"exiftool -q -q -overwrite_original"
-    f" -XResolution={dpi}"
-    f" -YResolution={dpi}"
-    f" -ResolutionUnit=inches"
-    f" -ProcessingSoftware=PythonOpenCV"
-    f" -XPComment={final_comment}"
-    f" -UserComment={final_comment}"
-    f" {path_to_file}"
-    subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                     universal_newlines=True)
+def exif_update_resolution_tags(path_to_file, scale_in_dpmm):
+    if scale_in_dpmm < 0:
+        return
+    else:
+        dpi = 25.4 * scale_in_dpmm
+        formatted_scale = "{:.0f}".format(scale_in_dpmm)
+        comment = exif.read_tag_value("UserComment", path_to_file)
+        final_comment = f"{comment}calc{formatted_scale}dpmm;"
+        args = f"exiftool -q -q -overwrite_original"
+        f" -XResolution={dpi}"
+        f" -YResolution={dpi}"
+        f" -ResolutionUnit=inches"
+        f" -ProcessingSoftware=PythonOpenCV"
+        f" -XPComment={final_comment}"
+        f" -UserComment={final_comment}"
+        f" {path_to_file}"
+        subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                         universal_newlines=True)
 
 
 def add_scale_to_file_name(output_samples_path_to_file, calculated_scale_one_mm_in_px):

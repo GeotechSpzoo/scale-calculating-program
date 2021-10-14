@@ -40,7 +40,7 @@ def calculate_scale(original_file_folder, main_subject_folder, original_file_nam
     print(f"Calculating scale for:\n {original_file_path}\n")
     img = f.load_image(original_file_path)
     img_dots = f.crop_dots(img, original_file_path)
-    img_sample = f.crop_sample(img, original_file_path)
+    img_sample = f.crop_document(img, original_file_path)
     output_samples_folder = main_subject_folder + "_samples"
     output_samples_path_to_file = output_samples_folder + os.path.sep + original_file_name
     f.save_photo(img_sample,
@@ -80,10 +80,10 @@ def calculate_scale(original_file_folder, main_subject_folder, original_file_nam
                                                               ZOOM_OUT_REF_LINE_LENGTH_IN_MM,
                                                               gray,
                                                               original_file_path, wait=wait)
-        img_with_a_ruler = f.draw_result_img(img, ref_left_dot, ref_right_dot, calculated_scale_one_mm_in_px,
-                                             original_file_path,
-                                             wait=wait,
-                                             show_image=wait)
+        img_with_a_ruler = f.draw_calculated_img(img, ref_left_dot, ref_right_dot, calculated_scale_one_mm_in_px,
+                                                 original_file_path,
+                                                 wait=wait,
+                                                 show_image=wait)
         output_folder = main_subject_folder + "_scale_calculated"
         output_file_name = "ruler_" + original_file_name.replace(".jpg",
                                                                  "_{:.0f}dpmm.jpg".format(
@@ -138,7 +138,7 @@ def find_ref_calibration_dots(blurred, gray, input_file, is_zoom_in, left_dots, 
 found_jpegs = []
 
 default_path_to_search = "C:\\Users\\pawel.drelich\\Desktop\\Materialy\\AnalizaObrazu\\SamplePhotosLabo\\3144"
-main_folder = ""
+user_input_folder = ""
 
 
 def get_input(message):
@@ -156,7 +156,7 @@ def end_program(message):
 
 
 def request_path_to_find_photos():
-    global found_jpegs, main_folder, output_folder
+    global found_jpegs, user_input_folder, output_folder
     user_input = get_input("Podej mnie ten ścieżek do zdjęciówek:")
     path = pathlib.Path(user_input)
     if path.exists():
@@ -195,7 +195,7 @@ def proceed_scale_calculation():
         current_photo_index += 1
         print_line()
         print(f"Photo {current_photo_index} of {number_of_photos_to_proceed}...")
-        calculated_scale = calculate_scale(file_folder_path, main_folder, current_file_name)
+        calculated_scale = calculate_scale(file_folder_path, user_input_folder, current_file_name)
         if calculated_scale != -1:
             calculated_photos.append((current_file_name, calculated_scale))
     f.close_all_windows()
@@ -222,7 +222,7 @@ def start_program():
     global number_of_photos_to_proceed, output_folder
     number_of_photos_to_proceed = find_photos()
     if number_of_photos_to_proceed > 0:
-        output_folder = main_folder
+        output_folder = user_input_folder
         get_input("Naciśnij ENTER aby rozpocząć kalkulację skali zdjęć lub wpisz 'q' aby anulować...")
         print("Rozpoczęto analizę zdjęć...")
         proceed_scale_calculation()
