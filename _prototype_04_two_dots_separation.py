@@ -269,5 +269,5 @@ except (Exception, KeyboardInterrupt, OSError) as e:
 finally:
     end_program("Koniec programu...")
 
-# COMPILE COMMAND: 'pyinstaller --onefile --windowed _prototype_03_two_dots_separation.py'
-# COMPILE COMMAND: 'pyinstaller --onefile _prototype_03_two_dots_separation.py'
+# COMPILE COMMAND: 'pyinstaller --onefile --windowed _prototype_04_two_dots_separation.py'
+# COMPILE COMMAND: 'pyinstaller --onefile _prototype_04_two_dots_separation.py'
