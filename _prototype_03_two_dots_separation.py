@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 from sys import exit
 
@@ -27,7 +29,7 @@ output_samples_folder = ""
 
 def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     global output_folder, output_samples_folder
-    is_zoom_in = ZOOM_IN in file_name
+    is_zoom_in = ZOOM_IN in current_file_name
     input_file = path_to_photo_folder + photo_file_name
     print(f"Calculating scale for:\n {input_file}\n")
     wait = False
@@ -153,10 +155,12 @@ def request_path_to_find_photos():
 # while request_path_to_find_photos() == 0:
 #     pass
 
-photos_number_to_proceed = 0
-current_photo_index = 0
 calculated_photos = []
-file_name = ""
+number_of_photos_to_proceed = 0
+current_photo_index = 0
+current_file_name = ""
+report_file_path = ""
+report_message = "Analizę zakończono pomyślnie."
 
 
 def find_photos():
@@ -164,22 +168,25 @@ def find_photos():
 
 
 def proceed_scale_calculation():
-    global file_name, current_photo_index
-    for (file_folder_path, file_name) in found_jpegs:
+    global current_file_name, current_photo_index, calculated_photos
+    for (file_folder_path, current_file_name) in found_jpegs:
         current_photo_index += 1
         print_line()
-        print(f"Photo {current_photo_index} of {photos_number_to_proceed}...")
-        calculated_scale = calculate_scale(file_folder_path, main_folder, file_name)
+        print(f"Photo {current_photo_index} of {number_of_photos_to_proceed}...")
+        calculated_scale = calculate_scale(file_folder_path, main_folder, current_file_name)
         if calculated_scale != -1:
-            calculated_photos.append((file_name, calculated_scale))
+            calculated_photos.append((current_file_name, calculated_scale))
     f.close_all_windows()
-    f.create_report(output_folder, calculated_photos, photos_number_to_proceed)
 
 
 def finish_message():
+    global report_file_path
     print_line()
     print(f"Skala znaleziona w {len(calculated_photos)} z {current_photo_index} przeanalizowanych zdjęć.")
     print(f"Foldery wyjściowe:\n{output_folder}\n{output_samples_folder}")
+    report_file_path = output_folder + os.path.sep + "report.txt"
+    f.create_report(report_file_path, calculated_photos, current_photo_index, report_message)
+    print(f"Raport:\n{report_file_path}")
 
 
 def print_line():
@@ -187,9 +194,9 @@ def print_line():
 
 
 def start_program():
-    global photos_number_to_proceed
-    photos_number_to_proceed = find_photos()
-    if photos_number_to_proceed > 0:
+    global number_of_photos_to_proceed
+    number_of_photos_to_proceed = find_photos()
+    if number_of_photos_to_proceed > 0:
         get_input("Naciśnij ENTER aby rozpocząć kalkulację skali zdjęć lub wpisz 'q' aby anulować...")
         print("Rozpoczęto analizę zdjęć...")
         proceed_scale_calculation()
@@ -206,11 +213,14 @@ def start_program():
 try:
     start_program()
 except (Exception, KeyboardInterrupt, OSError) as e:
+    report_message = f"Przerwano działanie programu z powodu: {e}"
     print_line()
     if len(str(e)) == 0:
-        e = "Wciśnięto CTRL + C lub przerwano działanie programu z nieznanego powodu."
+        report_message = "Wciśnięto CTRL + C lub przerwano działanie programu z nieznanego powodu."
+        e = report_message
     print(f"\nERROR:\n{e}\nERROR\n")
     if "WinError 2" in str(e):
+        report_message = f"Prawdopodobnie brakuje pliku 'exiftool.exe'. Przerwano działanie programu: {e}"
         print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania programu.")
         print("\tŚciągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.")
     print_line()

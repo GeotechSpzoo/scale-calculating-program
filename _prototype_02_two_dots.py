@@ -18,7 +18,7 @@ output_samples_folder = ""
 
 def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     global output_folder, output_samples_folder
-    is_zoom_in = ZOOM_IN in file_name
+    is_zoom_in = ZOOM_IN in current_file_name
     input_file = path_to_photo_folder + photo_file_name
     print(f"Calculating scale for: {input_file}")
     wait = False
@@ -103,28 +103,28 @@ def request_path_to_find_photos():
 # while request_path_to_find_photos() == 0:
 #     pass
 
-photos_number_to_proceed = 0
+number_of_photos_to_proceed = 0
 current_photo_index = 1
 calculated_photos = []
 
 
 def find_photos():
-    global photos_number_to_proceed
+    global number_of_photos_to_proceed
     photos_number_to_proceed = request_path_to_find_photos()
 
 
 find_photos()
 
-for (file_folder_path, file_name) in found_jpegs:
+for (file_folder_path, current_file_name) in found_jpegs:
     print("---------------------------------------")
-    print(f"Photo {current_photo_index} of {photos_number_to_proceed}...")
-    calculated_scale = calculate_scale(file_folder_path, default_path_to_search, file_name)
+    print(f"Photo {current_photo_index} of {number_of_photos_to_proceed}...")
+    calculated_scale = calculate_scale(file_folder_path, default_path_to_search, current_file_name)
     current_photo_index += 1
     if calculated_scale != -1:
-        calculated_photos.append((file_name, calculated_scale))
+        calculated_photos.append((current_file_name, calculated_scale))
 
 print("---------------------------------------")
-print(f"{len(calculated_photos)} of {photos_number_to_proceed} photos calculated.")
+print(f"{len(calculated_photos)} of {number_of_photos_to_proceed} photos calculated.")
 print(f"Output paths:\n{output_folder}\n{output_samples_folder}")
 
 f.close_all_windows()

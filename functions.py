@@ -888,13 +888,14 @@ def find_all_jpegs(directory, file_name_contains="", show_paths=False):
 # cv2.waitKey(0)
 
 
-def create_report(path, calculated_photos, all_photos_number):
-    report_file_path = path + os.path.sep + "report.txt"
-    report_content = f"{len(calculated_photos)} of {all_photos_number} photos with scale calculated:\n"
+def create_report(report_file_path, calculated_photos_with_scale, number_of_proceeded_photos, report_message):
+    report_content = f"Skala znaleziona w {len(calculated_photos_with_scale)} z {number_of_proceeded_photos} " \
+                     f"przeanalizownych zdjęć:\n"
     counter = 1
-    for (file_name, scale) in calculated_photos:
+    for (file_name, scale) in calculated_photos_with_scale:
         file_name = file_name.replace(".jpg", "_{:.0f}dpmm.jpg".format(scale))
         report_content = report_content + f"{counter}. {file_name}\n"
         counter += 1
+    report_content = report_content + report_message + "\n"
     with open(report_file_path, 'w') as report:
         report.write(report_content)

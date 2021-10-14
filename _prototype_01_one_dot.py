@@ -11,11 +11,11 @@ def find_ref_object(path_to_image):
     print(path_to_image)
     img = f.load_image(path_to_image)
     gray = f.bgr_to_gray(img)
-    blurred = f.blur_bilateral_filter_min(gray)
+    blurred = f.blur_bilateral_filter_min(gray, path_to_image)
     for i in range(35):
-        blurred = f.blur_bilateral_filter_min(blurred)
+        blurred = f.blur_bilateral_filter_min(blurred, path_to_image)
     binary = f.gray_to_binary(blurred, 77)
-    edged = f.detect_edges_raw_canny(binary, 25, 100)
+    edged = f.detect_edges_raw_canny(binary, 25, 100, path_to_image)
     # eroded = f.erode_dilate(edged)
     return f.find_contours_and_draw_them(f.gray_to_bgr(gray), edged, path_to_image, MIN_SIZE_ZOOM_IN,
                                          MAX_SIZE_ZOOM_IN)
@@ -30,8 +30,8 @@ iterations = 0
 # iterate through photos
 pathToPhotos = "testAlgo1/"
 file_names = next(walk(pathToPhotos), (None, None, []))[2]
-for file_name in file_names:
-    scale_factor = find_ref_object(pathToPhotos + file_name)
+for current_file_name in file_names:
+    scale_factor = find_ref_object(pathToPhotos + current_file_name)
     # find minimum and max scale_factor
     if scale_factor is not None:
         scale_factor_sum += scale_factor
