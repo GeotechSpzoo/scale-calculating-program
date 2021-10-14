@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 import numpy as np
 from sys import exit
@@ -27,35 +28,78 @@ output_folder = ""
 output_samples_folder = ""
 
 
-def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
+def calculate_scale(original_file_folder, main_subject_folder, original_file_name):
     global output_folder, output_samples_folder
     is_zoom_in = ZOOM_IN in current_file_name
-    input_file = path_to_photo_folder + photo_file_name
-    print(f"Calculating scale for:\n {input_file}\n")
+    calculated_scale_one_mm_in_px = -1
+    original_file_path = os.path.join(original_file_folder, original_file_name)
+    ai_file_folder = original_file_folder + "_ai"
+    documentation_file_folder = original_file_folder + "_documentation"
+    calculated_file_folder = original_file_folder + "_calculated"
     wait = False
-    img = f.load_image(input_file)
-    crop = f.crop_dots(img, input_file)
-    crop_sample = f.crop_sample(img, input_file)
+    print(f"Calculating scale for:\n {original_file_path}\n")
+    img = f.load_image(original_file_path)
+    img_dots = f.crop_dots(img, original_file_path)
+    img_sample = f.crop_sample(img, original_file_path)
     output_samples_folder = main_subject_folder + "_samples"
-    output_samples_path_to_file = output_samples_folder + os.path.sep + photo_file_name
-    f.save_photo(crop_sample,
+    output_samples_path_to_file = output_samples_folder + os.path.sep + original_file_name
+    f.save_photo(img_sample,
                  output_samples_folder,
                  output_samples_path_to_file,
                  override=False)
-    f.exif_copy_all_tags(input_file, output_samples_path_to_file)
-    # gray = f.bgr_to_gray(crop)
-    gray = f.bgr_to_custom_gray(crop)
+    f.exif_copy_all_tags(original_file_path, output_samples_path_to_file)
+    gray = f.bgr_to_custom_gray(img_dots)
     blurred = f.blur_bilateral_filter_min(gray, "")
     blurred = f.contrast_increase_clahe_gray(blurred, wait=wait)
     for i in range(35):
         blurred = f.blur_bilateral_filter_min(blurred, "")
         blurred = f.contrast_increase_clahe_gray(blurred)
-    blurred = f.blur_bilateral_filter_min(blurred, input_file, wait=wait)
+    blurred = f.blur_bilateral_filter_min(blurred, original_file_path, wait=wait)
     # for c in range(0, 20):
     blurred = f.contrast_increase_clahe_gray(blurred, wait=wait)
     dots_found = False
-    ref_left_dot, ref_right_dot = None, None
     left_dots, right_dots = [], []
+    ref_left_dot, ref_right_dot = find_ref_calibration_dots(blurred, gray, original_file_path, is_zoom_in, left_dots,
+                                                            right_dots, wait)
+    if ref_left_dot and ref_right_dot is not None:
+        dots_found = True
+    if not dots_found:
+        if len(left_dots) == 0:
+            print("LEFT CALIBRATION DOT NOT FOUND!")
+        if len(right_dots) == 0:
+            print("RIGHT CALIBRATION DOT NOT FOUND!")
+        print("Scale cannot be calculated.")
+    else:
+        if is_zoom_in:
+            calculated_scale_one_mm_in_px = f.calculate_scale(ref_left_dot, ref_right_dot,
+                                                              ZOOM_IN_REF_LINE_LENGTH_IN_MM,
+                                                              gray,
+                                                              original_file_path, wait=wait)
+        else:
+            calculated_scale_one_mm_in_px = f.calculate_scale(ref_left_dot, ref_right_dot,
+                                                              ZOOM_OUT_REF_LINE_LENGTH_IN_MM,
+                                                              gray,
+                                                              original_file_path, wait=wait)
+        img_with_a_ruler = f.draw_result_img(img, ref_left_dot, ref_right_dot, calculated_scale_one_mm_in_px,
+                                             original_file_path,
+                                             wait=wait,
+                                             show_image=wait)
+        output_folder = main_subject_folder + "_scale_calculated"
+        output_file_name = "ruler_" + original_file_name.replace(".jpg",
+                                                                 "_{:.0f}dpmm.jpg".format(
+                                                                     calculated_scale_one_mm_in_px))
+        output_path_to_file = output_folder + os.path.sep + output_file_name
+        f.save_photo(img_with_a_ruler, output_folder, output_path_to_file, override=True)
+        f.exif_copy_all_tags(original_file_path, output_path_to_file)
+        f.exif_update_resolution_tags(output_path_to_file, calculated_scale_one_mm_in_px)
+        f.exif_update_resolution_tags(output_samples_path_to_file, calculated_scale_one_mm_in_px)
+        f.add_scale_to_file_name(output_samples_path_to_file, calculated_scale_one_mm_in_px)
+    return calculated_scale_one_mm_in_px
+
+
+def find_ref_calibration_dots(blurred, gray, input_file, is_zoom_in, left_dots, right_dots,
+                              wait):
+    result_ref_left_dot, result_ref_right_dot = None, None
     for tresh in range(0, 100, 5):
         binary = f.gray_to_binary(blurred, input_file, tresh / 100, is_zoom_in, wait=wait)
         edged = f.detect_edges_raw_canny(binary, 25, 100, input_file)
@@ -81,43 +125,14 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
                 if is_zoom_in:
                     if ZOOM_IN_MIN_DISTANCE_BETWEEN_DOTS_IN_PX < np.abs(
                             distance) < ZOOM_IN_MAX_DISTANCE_BETWEEN_DOTS_IN_PX:
-                        ref_left_dot = left_dot
-                        ref_right_dot = right_dot
+                        result_ref_left_dot = left_dot
+                        result_ref_right_dot = right_dot
                 else:
                     if ZOOM_OUT_MIN_DISTANCE_BETWEEN_DOTS_IN_PX < np.abs(
                             distance) < ZOOM_OUT_MAX_DISTANCE_BETWEEN_DOTS_IN_PX:
-                        ref_left_dot = left_dot
-                        ref_right_dot = right_dot
-    if ref_left_dot and ref_right_dot is not None:
-        dots_found = True
-    if not dots_found:
-        if len(left_dots) == 0:
-            print("LEFT CALIBRATION DOT NOT FOUND!")
-        if len(right_dots) == 0:
-            print("RIGHT CALIBRATION DOT NOT FOUND!")
-        print("Scale cannot be calculated.")
-        return -1
-    if is_zoom_in:
-        calculated_scale_one_mm_in_px = f.calculate_scale(ref_left_dot, ref_right_dot, ZOOM_IN_REF_LINE_LENGTH_IN_MM,
-                                                          gray,
-                                                          input_file, wait=wait)
-    else:
-        calculated_scale_one_mm_in_px = f.calculate_scale(ref_left_dot, ref_right_dot, ZOOM_OUT_REF_LINE_LENGTH_IN_MM,
-                                                          gray,
-                                                          input_file, wait=wait)
-    img_with_a_ruler = f.draw_rulers(img, ref_left_dot, ref_right_dot, calculated_scale_one_mm_in_px, input_file,
-                                     wait=wait,
-                                     show_image=wait)
-    output_folder = main_subject_folder + "_scale_calculated"
-    output_file_name = "ruler_" + photo_file_name.replace(".jpg",
-                                                          "_{:.0f}dpmm.jpg".format(calculated_scale_one_mm_in_px))
-    output_path_to_file = output_folder + os.path.sep + output_file_name
-    f.save_photo(img_with_a_ruler, output_folder, output_path_to_file, override=True)
-    f.exif_copy_all_tags(input_file, output_path_to_file)
-    f.exif_update_resolution_tags(output_path_to_file, calculated_scale_one_mm_in_px)
-    f.exif_update_resolution_tags(output_samples_path_to_file, calculated_scale_one_mm_in_px)
-    f.add_scale_to_file_name(output_samples_path_to_file, calculated_scale_one_mm_in_px)
-    return calculated_scale_one_mm_in_px
+                        result_ref_left_dot = left_dot
+                        result_ref_right_dot = right_dot
+    return result_ref_left_dot, result_ref_right_dot
 
 
 found_jpegs = []
@@ -142,7 +157,14 @@ def end_program(message):
 
 def request_path_to_find_photos():
     global found_jpegs, main_folder, output_folder
-    main_folder = os.path.dirname(get_input("Podej mnie ten ścieżek do zdjęciówek:"))
+    user_input = get_input("Podej mnie ten ścieżek do zdjęciówek:")
+    path = pathlib.Path(user_input)
+    if path.exists():
+        main_folder = str(path)
+    else:
+        print("Podana ścieżka nie istnieje.")
+        request_path_to_find_photos()
+        return
     phrase_to_include_in_file_name = get_input(
         "Podej mnie ten frazes, który powinin zawierać się w nazwie plyku, abo walnij ENTERem aby nie flirtować plików:"
     )

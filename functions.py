@@ -45,11 +45,15 @@ def crop_dots_with_black_border(img, window_name):
     width = img.shape[1]
     crop_height = int(0.2 * height)
     crop_width = width
-    blank_image = np.zeros((crop_height + 6, crop_width + 6, 3), np.uint8)
+    blank_image = create_bgr_black_img(crop_height + 6, crop_width + 6)
     crop_img = img[0:int(0.2 * height), 0:width]
     merged = merge(blank_image, crop_img, 3, 3)
     # cv2.imshow(f"crop_dots_with_black_border {window_name}", merged)
     return merged
+
+
+def create_bgr_black_img(height, width):
+    return np.zeros((height, width, 3), np.uint8)
 
 
 def merge(background, foreground, x, y):
@@ -785,7 +789,7 @@ def draw_rulers_with_labels(img, one_mm_in_px, width):
         counter += 1
 
 
-def draw_rulers(img, dot1, dot2, scale_one_mm_in_px, window_name, wait=False, show_image=False):
+def draw_result_img(img, dot1, dot2, scale_one_mm_in_px, window_name, wait=False, show_image=False):
     dot1_center = box_center(dot1)
     dot2_center = box_center(dot2)
     line = (dot1_center, dot2_center)
@@ -862,7 +866,7 @@ def find_all_jpegs(directory, file_name_contains="", show_paths=False):
         if len(files) > 0:
             for file in files:
                 file_folder_path = root + os.path.sep
-                if file.endswith(".jpg") and file_name_contains in file:
+                if str(file).lower().endswith(".jpg") and file_name_contains.lower() in str(file).lower():
                     found_jpegs.append((file_folder_path, file))
                     file_counter += 1
                     if show_paths:
