@@ -889,13 +889,20 @@ def find_all_jpegs(directory, file_name_contains="", show_paths=False):
 
 
 def create_report(report_file_path, calculated_photos_with_scale, number_of_proceeded_photos, report_message):
+    final_path = report_file_path
     report_content = f"Skala znaleziona w {len(calculated_photos_with_scale)} z {number_of_proceeded_photos} " \
-                     f"przeanalizownych zdjęć:\n"
+                     f"przeanalizowanych zdjęć:\n"
     counter = 1
     for (file_name, scale) in calculated_photos_with_scale:
         file_name = file_name.replace(".jpg", "_{:.0f}dpmm.jpg".format(scale))
         report_content = report_content + f"{counter}. {file_name}\n"
         counter += 1
     report_content = report_content + report_message + "\n"
-    with open(report_file_path, 'w', encoding="utf-8-sig") as report:
-        report.write(report_content)
+    try:
+        with open(final_path, 'w', encoding="utf-8-sig") as report:
+            report.write(report_content)
+    except PermissionError as e:
+        final_path = os.path.basename(report_file_path)
+        with open(final_path, 'w', encoding="utf-8-sig") as report:
+            report.write(report_content)
+    return final_path

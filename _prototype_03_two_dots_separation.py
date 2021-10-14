@@ -37,7 +37,7 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     crop = f.crop_dots(img, input_file)
     crop_sample = f.crop_sample(img, input_file)
     output_samples_folder = main_subject_folder + "_samples"
-    output_samples_path_to_file = output_samples_folder + "\\" + photo_file_name
+    output_samples_path_to_file = output_samples_folder + os.path.sep + photo_file_name
     f.save_photo(crop_sample,
                  output_samples_folder,
                  output_samples_path_to_file,
@@ -142,7 +142,7 @@ def end_program(message):
 
 def request_path_to_find_photos():
     global found_jpegs, main_folder, output_folder
-    main_folder = get_input("Podej mnie ten ścieżek do zdjęciówek:")
+    main_folder = os.path.dirname(get_input("Podej mnie ten ścieżek do zdjęciówek:"))
     phrase_to_include_in_file_name = get_input(
         "Podej mnie ten frazes, który powinin zawierać się w nazwie plyku, abo walnij ENTERem aby nie flirtować plików:"
     )
@@ -184,7 +184,10 @@ def finish_message():
     print_line()
     print(f"Skala znaleziona w {len(calculated_photos)} z {current_photo_index} przeanalizowanych zdjęć.")
     print(f"Foldery wyjściowe:\n{output_folder}\n{output_samples_folder}")
-    report_file_path = output_folder + "report.txt"
+    if len(output_folder) == 0:
+        report_file_path = "report.txt"
+    else:
+        report_file_path = output_folder + os.path.sep + "report.txt"
     f.create_report(report_file_path, calculated_photos, current_photo_index, report_message)
     print(f"Raport:\n{report_file_path}")
 
@@ -219,7 +222,7 @@ except (Exception, KeyboardInterrupt, OSError) as e:
     if len(str(e)) == 0:
         report_message = "Wciśnięto CTRL + C lub przerwano działanie programu z nieznanego powodu."
         e = report_message
-    print(f"\nERROR:\n{e}\nERROR\n")
+    print(f"\nERROR:\n{e}\n")
     if "WinError 2" in str(e):
         report_message = f"Prawdopodobnie brakuje pliku 'exiftool.exe'. Przerwano działanie programu: {e}"
         print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania programu.")
