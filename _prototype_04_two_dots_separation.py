@@ -187,9 +187,9 @@ def end_program(message):
 def request_path_to_find_photos():
     global found_jpegs, user_input_folder
     user_input = get_input("Podej mnie ten ścieżek do zdjęciówek:")
-    path = pathlib.Path(user_input)
-    if path.exists() and user_input != "" and not path.is_file() and path.is_dir():
-        user_input_folder = str(path)
+    path = pathlib.Path(user_input.replace("\t", ""))
+    if path.exists() and len(str(path)) > 0 and not path.is_file() and path.is_dir() and str(path) != ".":
+        user_input_folder = str(os.path.abspath(path))
     else:
         print("Podana ścieżka nie istnieje.")
         return request_path_to_find_photos()
@@ -224,7 +224,7 @@ def finish_message():
     print(f"Skala znaleziona w {len(calculated_photos)} z {current_photo_index} przeanalizowanych zdjęć.")
     print(f"Foldery wyjściowe:\n{ai_output}\n{documentation_output}\n{calculated_output}")
     report_file_path = os.path.join(user_input_folder, "report.txt")
-    f.create_report(report_file_path, calculated_photos, current_photo_index, report_message)
+    report_file_path = f.create_report(report_file_path, calculated_photos, current_photo_index, report_message)
     print(f"Raport:\n{report_file_path}")
 
 
