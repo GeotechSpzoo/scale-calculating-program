@@ -897,5 +897,5 @@ def create_report(report_file_path, calculated_photos_with_scale, number_of_proc
         report_content = report_content + f"{counter}. {file_name}\n"
         counter += 1
     report_content = report_content + report_message + "\n"
-    with open(report_file_path, 'w') as report:
+    with open(report_file_path, 'w', encoding="utf-8-sig") as report:
         report.write(report_content)

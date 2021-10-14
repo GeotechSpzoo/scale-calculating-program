@@ -108,10 +108,10 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
     img_with_a_ruler = f.draw_rulers(img, ref_left_dot, ref_right_dot, calculated_scale_one_mm_in_px, input_file,
                                      wait=wait,
                                      show_image=wait)
-    output_folder = main_subject_folder + "_scale_calculated\\"
+    output_folder = main_subject_folder + "_scale_calculated"
     output_file_name = "ruler_" + photo_file_name.replace(".jpg",
                                                           "_{:.0f}dpmm.jpg".format(calculated_scale_one_mm_in_px))
-    output_path_to_file = output_folder + output_file_name
+    output_path_to_file = output_folder + os.path.sep + output_file_name
     f.save_photo(img_with_a_ruler, output_folder, output_path_to_file, override=True)
     f.exif_copy_all_tags(input_file, output_path_to_file)
     f.exif_update_resolution_tags(output_path_to_file, calculated_scale_one_mm_in_px)
@@ -129,7 +129,7 @@ main_folder = ""
 def get_input(message):
     result = input(message + "\n")
     if result == "q":
-        end_program("Program przerwany przez użytkownika...")
+        raise Exception("Program przerwany po wpisaniu 'q' przez użytkownika.")
     else:
         return result
 
@@ -141,7 +141,7 @@ def end_program(message):
 
 
 def request_path_to_find_photos():
-    global found_jpegs, main_folder
+    global found_jpegs, main_folder, output_folder
     main_folder = get_input("Podej mnie ten ścieżek do zdjęciówek:")
     phrase_to_include_in_file_name = get_input(
         "Podej mnie ten frazes, który powinin zawierać się w nazwie plyku, abo walnij ENTERem aby nie flirtować plików:"
@@ -184,7 +184,7 @@ def finish_message():
     print_line()
     print(f"Skala znaleziona w {len(calculated_photos)} z {current_photo_index} przeanalizowanych zdjęć.")
     print(f"Foldery wyjściowe:\n{output_folder}\n{output_samples_folder}")
-    report_file_path = output_folder + os.path.sep + "report.txt"
+    report_file_path = output_folder + "report.txt"
     f.create_report(report_file_path, calculated_photos, current_photo_index, report_message)
     print(f"Raport:\n{report_file_path}")
 
@@ -194,9 +194,10 @@ def print_line():
 
 
 def start_program():
-    global number_of_photos_to_proceed
+    global number_of_photos_to_proceed, output_folder
     number_of_photos_to_proceed = find_photos()
     if number_of_photos_to_proceed > 0:
+        output_folder = main_folder
         get_input("Naciśnij ENTER aby rozpocząć kalkulację skali zdjęć lub wpisz 'q' aby anulować...")
         print("Rozpoczęto analizę zdjęć...")
         proceed_scale_calculation()
@@ -224,7 +225,7 @@ except (Exception, KeyboardInterrupt, OSError) as e:
         print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania programu.")
         print("\tŚciągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.")
     print_line()
-    print("Złapano wyjątek. Program został zatrzymany")
+    print("Złapano wyjątek. Program został zatrzymany.")
 finally:
     end_program("Koniec programu...")
 
