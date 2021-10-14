@@ -7,7 +7,7 @@ user_comment = "UserComment"
 
 def read_tag_value(tag, source_file):
     args = ["exiftool", "-s", "-s", "-s", f"-{tag}", f"{source_file}"]
-    process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                universal_newlines=True)
     out, err = process.communicate()
     # print(f"Exif read: {tag} = {out}")
@@ -24,19 +24,19 @@ def write_tag_value(tag, value, source_file):
 
 def print_tag_value(tag, source_file):
     read_args = ["exiftool", f"-{tag}", f"{source_file}"]
-    subprocess.Popen(read_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    subprocess.Popen(read_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                      universal_newlines=True)
 
 
 def print_all_tags(source_file):
     args = f"exiftool -a -u -g1 {source_file}"
-    subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                      universal_newlines=True)
 
 
 def delete_all_tags(source_file):
     args = f"exiftool -all= {source_file}"
-    subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                      universal_newlines=True)
 
 
@@ -62,7 +62,7 @@ def is_blank(my_string):
 
 def copy_all_tags(source_file, destination_file):
     args = f"exiftool -q -q -overwrite_original -TagsFromFile {source_file} -all:all>all:all {destination_file}"
-    subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                      universal_newlines=True)
 
 # write_tag_value(xp_comment, "0;graw01;0m;DRY;zoom-in;IR;706dpmm;")

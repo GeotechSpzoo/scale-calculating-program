@@ -172,15 +172,14 @@ def proceed_scale_calculation():
         calculated_scale = calculate_scale(file_folder_path, main_folder, file_name)
         if calculated_scale != -1:
             calculated_photos.append((file_name, calculated_scale))
-    # finish_message()
     f.close_all_windows()
     f.create_report(output_folder, calculated_photos, photos_number_to_proceed)
 
 
 def finish_message():
     print_line()
-    print(f"Scale found in {len(calculated_photos)} of {current_photo_index} processed photos.")
-    print(f"Output paths:\n{output_folder}\n{output_samples_folder}")
+    print(f"Skala znaleziona w {len(calculated_photos)} z {current_photo_index} przeanalizowanych zdjęć.")
+    print(f"Foldery wyjściowe:\n{output_folder}\n{output_samples_folder}")
 
 
 def print_line():
@@ -208,9 +207,11 @@ try:
     start_program()
 except (Exception, KeyboardInterrupt, OSError) as e:
     print_line()
-    print(f"\nERROR\n{e}\nERROR\n")
+    if len(str(e)) == 0:
+        e = "Wciśnięto CTRL + C lub przerwano działanie programu z nieznanego powodu."
+    print(f"\nERROR:\n{e}\nERROR\n")
     if "WinError 2" in str(e):
-        print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania.")
+        print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania programu.")
         print("\tŚciągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.")
     print_line()
     print("Złapano wyjątek. Program został zatrzymany")
