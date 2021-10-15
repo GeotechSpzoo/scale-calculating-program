@@ -1,5 +1,6 @@
 import os
 import pathlib
+import sys
 
 import numpy as np
 from sys import exit
@@ -43,6 +44,7 @@ found_jpegs = []
 calculated_photos = []
 
 report_message = "Analizę zakończono pomyślnie."
+user_abort_message = "Program przerwany po wpisaniu 'q' przez użytkownika."
 
 
 def calculate_scale(original_file_folder, main_subject_folder, original_file_name):
@@ -171,9 +173,10 @@ def find_ref_calibration_dots(blurred, gray, input_file, is_zoom_in, left_dots, 
 
 
 def get_input(message):
-    result = input(message + "\n")
+    global user_abort_message
+    result = input(message + "\n").strip()
     if result == "q":
-        raise Exception("Program przerwany po wpisaniu 'q' przez użytkownika.")
+        raise Exception(user_abort_message)
     else:
         return result
 
@@ -187,23 +190,31 @@ def end_program(message):
 def request_path_to_find_photos():
     global found_jpegs, user_input_folder
     user_input = get_input("Podej mnie ten ścieżek do zdjęciówek:")
-    path = pathlib.Path(user_input.replace("\t", ""))
-    if path.exists() and len(str(path)) > 0 and not path.is_file() and path.is_dir() and str(path) != ".":
-        user_input_folder = str(os.path.abspath(path))
-    else:
-        print("Podana ścieżka nie istnieje.")
-        return request_path_to_find_photos()
-    phrase_to_include_in_file_name = get_input("Podej mnie ten frazes, który powinin zawierać się w nazwie plyku,"
-                                               " abo walnij ENTERem aby nie flirtować plików:")
-    found_jpegs = f.find_all_jpegs(user_input_folder, phrase_to_include_in_file_name)
-    if found_jpegs is None:
-        return 0
-    else:
-        return len(found_jpegs)
+    path = pathlib.Path(user_input)
+    try:
+        if path.exists() and len(str(path)) > 0 and not path.is_file() and path.is_dir() and str(path) != ".":
+            user_input_folder = str(os.path.abspath(path))
+            phrase_to_include_in_file_name = get_input(
+                "Podej mnie ten frazes, który powinin zawierać się w nazwie plyku,"
+                " abo walnij ENTERem aby nie flirtować plików:")
+            found_jpegs = f.find_all_jpegs(user_input_folder, phrase_to_include_in_file_name)
+            if found_jpegs is None:
+                return 0
+            else:
+                return len(found_jpegs)
+        else:
+            print("Podana ścieżka jest nieprawidłowa.")
+            return -1
+    except Exception as e:
+        print("Podana ścieżka jest nieprawidłowa.")
+        return -1
 
 
 def find_photos():
-    return request_path_to_find_photos()
+    i = -1
+    while i == -1:
+        i = request_path_to_find_photos()
+    return i
 
 
 def proceed_scale_calculation():
@@ -224,7 +235,8 @@ def finish_message():
     print(f"Skala znaleziona w {len(calculated_photos)} z {current_photo_index} przeanalizowanych zdjęć.")
     print(f"Foldery wyjściowe:\n{ai_output}\n{documentation_output}\n{calculated_output}")
     report_file_path = os.path.join(user_input_folder, "report.txt")
-    report_file_path = f.create_report(report_file_path, calculated_photos, current_photo_index, report_message)
+    report_file_path = os.path.abspath(report_file_path)
+    f.create_report(report_file_path, calculated_photos, current_photo_index, report_message)
     print(f"Raport:\n{report_file_path}")
 
 
@@ -249,23 +261,41 @@ def start_program():
         start_program()
 
 
+def prepare_working_dir():
+    if getattr(sys, 'frozen', False):
+        application_path = os.path.dirname(sys.executable)
+    elif __file__:
+        application_path = os.path.dirname(__file__)
+    else:
+        application_path = os.getcwd()
+    os.chdir(application_path)
+
+
 # start_program()
 # end_program("test end")
+
+
+prepare_working_dir()
 try:
     start_program()
 except (Exception, KeyboardInterrupt, OSError) as e:
-    report_message = f"Przerwano działanie programu z powodu: {e}"
-    print_line()
-    if len(str(e)) == 0:
-        report_message = "Wciśnięto CTRL + C lub przerwano działanie programu z nieznanego powodu."
-        e = report_message
-    print(f"\nERROR:\n{e}\n")
-    if "WinError 2" in str(e) and "'" not in str(e):
-        report_message = f"Prawdopodobnie brakuje pliku 'exiftool.exe'. Przerwano działanie programu: {e}"
-        print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania programu.")
-        print("\tŚciągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.")
-    print_line()
-    print("Złapano wyjątek. Program został zatrzymany.")
+    if str(e) == user_abort_message:
+        report_message = str(e)
+        print_line()
+        print(e)
+    else:
+        report_message = f"Przerwano działanie programu z powodu: {e}"
+        print_line()
+        if len(str(e)) == 0:
+            report_message = "Wciśnięto CTRL + C lub przerwano działanie programu z nieznanego powodu."
+            e = report_message
+        print(f"\nERROR:\n{e}\n")
+        if "WinError 2" in str(e) and "'" not in str(e):
+            report_message = f"Prawdopodobnie brakuje pliku 'exiftool.exe'. Przerwano działanie programu: {e}"
+            print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania programu.")
+            print("\tŚciągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.")
+        print_line()
+        print("Złapano wyjątek. Program został zatrzymany.")
 finally:
     end_program("Koniec programu...")
 

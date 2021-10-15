@@ -873,8 +873,8 @@ def add_scale_to_file_name(output_samples_path_to_file, calculated_scale_one_mm_
 
 
 def find_all_jpegs(directory, file_name_contains="", show_paths=False):
-    print(
-        f"Skanowanie folderów i podfolderów w poszukiwaniu plików '.jpg' zawierających frazę: '{file_name_contains}'\n {directory}\n")
+    print(f"Skanowanie folderów i podfolderów w poszukiwaniu plików '.jpg' zawierających frazę:"
+          f" '{file_name_contains}'\n {directory}\n")
     file_counter = 0
     found_jpegs = []
     for root, dirs, files in os.walk(directory):
@@ -886,29 +886,11 @@ def find_all_jpegs(directory, file_name_contains="", show_paths=False):
                     file_counter += 1
                     if show_paths:
                         print(f"{file_counter}. {file_folder_path + file}")
-
-                # print(sum(getsize(join(root, name)) for name in files), end="")
-                # print("bytes in", len(files), "non-directory files")
-                # if 'CVS' in dirs:
-                #     dirs.remove('CVS')  # don't visit CVS directories
-                # for file in files:
-                #     print(file)
-                # for dir in dirs:
-                #     print(dir)
     print(f"Znaleziono: {file_counter} plików.\n")
     return found_jpegs
 
 
-# img = load_image("bgr_to_gray.png")
-# cv2.imshow("test", img)
-# cv2.waitKey(0)
-# gray = bgr_to_custom_gray(img, wait=True)
-# gray = bgr_to_gray(img, wait=True)
-# cv2.waitKey(0)
-
-
 def create_report(report_file_path, calculated_photos_with_scale, number_of_proceeded_photos, report_message):
-    final_path = report_file_path
     report_content = f"Skala znaleziona w {len(calculated_photos_with_scale)} z {number_of_proceeded_photos} " \
                      f"przeanalizowanych zdjęć:\n"
     counter = 1
@@ -917,6 +899,5 @@ def create_report(report_file_path, calculated_photos_with_scale, number_of_proc
         report_content = report_content + f"{counter}. {file_name}\n"
         counter += 1
     report_content = report_content + report_message + "\n"
-    with open(final_path, 'w', encoding="utf-8-sig") as report:
+    with open(report_file_path, 'w', encoding="utf-8-sig") as report:
         report.write(report_content)
-    return final_path
