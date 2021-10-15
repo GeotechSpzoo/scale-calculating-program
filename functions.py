@@ -602,18 +602,36 @@ def filter_boxes_by_size(boxes, min_size_px, max_size_px, gray, window_name, wai
 
 
 def image_resolution(orig):
-    return orig.shape[:2]
+    height, width = orig.shape[:2]
+    return height, width
 
 
 def draw_text_info(orig, text):
     height, width = image_resolution(orig)
+    draw_text(orig,
+              text,
+              int(width / 4),
+              int(height / 2),
+              (0, 0, 255),
+              1.0,
+              3)
+    # cv2.putText(orig,
+    #             text,
+    #             (int(width / 4), int(height / 2)),
+    #             cv2.FONT_HERSHEY_SIMPLEX,
+    #             1.0,
+    #             (0, 0, 255),
+    #             3)
+
+
+def draw_text(orig, text, x, y, color, size, thickness):
     cv2.putText(orig,
                 text,
-                (int(width / 4), int(height / 2)),
+                (x, y),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                1.0,
-                (0, 0, 255),
-                3)
+                size,
+                color,
+                thickness)
 
 
 def find_ref_dots(filtered_boxes, min_px_distance_between_dots, gray, window_name, wait=False):
@@ -901,3 +919,8 @@ def create_report(report_file_path, calculated_photos_with_scale, number_of_proc
     report_content = report_content + report_message + "\n"
     with open(report_file_path, 'w', encoding="utf-8-sig") as report:
         report.write(report_content)
+
+
+def draw_scale_info(img, text):
+    height, width = image_resolution(img)
+    draw_text(img, text, int(width / 2), int(height - 5), (0, 0, 0), 0.8, 2)

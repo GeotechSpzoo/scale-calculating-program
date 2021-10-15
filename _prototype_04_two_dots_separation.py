@@ -65,11 +65,14 @@ def calculate_scale(original_file_folder, main_subject_folder, original_file_nam
     documentation_img = f.crop_document(original_img, original_file_path)
     if is_dots_found:
         documentation_img = f.draw_rulers_with_labels(documentation_img, scale_calculated_one_mm_in_px)
+        f.draw_scale_info(documentation_img, "skala obliczona 1mm = {:.0f}px".format(scale_calculated_one_mm_in_px))
     else:
         if is_zoom_in:
             documentation_img = f.draw_rulers_with_labels(documentation_img, ZOOM_IN_DEFAULT_SCALE_IN_PIXELS)
+            f.draw_scale_info(documentation_img, f"skala domyslna 1mm = {ZOOM_IN_DEFAULT_SCALE_IN_PIXELS}px +- 3%")
         else:
             documentation_img = f.draw_rulers_with_labels(documentation_img, ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS)
+            f.draw_scale_info(documentation_img, f"skala domyslna 1mm = {ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS}px +- 13%")
     save_image_with_exif_data(scale_calculated_one_mm_in_px, documentation_file_folder, documentation_img,
                               original_file_name, original_file_path, suffix_for_calculated_file)
     documentation_output = documentation_file_folder
