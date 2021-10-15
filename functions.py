@@ -67,8 +67,10 @@ def create_bgr_black_img(height, width):
     return np.zeros((height, width, 3), np.uint8)
 
 
-def merge(background, foreground, x, y):
+def merge(back, front, x, y):
     # get position and crop pasting area if needed
+    background = back.copy()
+    foreground = front.copy()
     bg_width = background.shape[0]
     bg_height = background.shape[1]
     fr_width = foreground.shape[0]
@@ -785,7 +787,55 @@ RULER_LABEL_THICKNESS = 2
 RULER_05_LABEL_LIMIT_PX = 200
 
 
-def draw_rulers_with_labels(original_img, one_mm_in_px):
+def draw_rulers_with_labels_outside_the_img(original_img, scale_in_dpmm):
+    upper_ruler_height = 86
+    left_ruler_width = 128
+    original_height, original_width, = image_resolution(original_img)
+    black_img = create_bgr_black_img(original_height + upper_ruler_height, original_width + left_ruler_width)
+    img = merge(black_img, original_img, left_ruler_width, upper_ruler_height)
+    i = 0
+    counter = 0
+    max_length = int(np.maximum(original_height, original_width))
+    while i < max_length:
+        if counter % 100 == 0:
+            # horizontal
+            cv2.line(img, (int(i), 0), (int(i), RULER_LINE_LENGTH_VERY_LONG), RULER_LABEL_COLOR,
+                     RULER_THICKNESS_VERY_BOLD)
+            cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm),
+                        (int(i) - RULER_LINE_LENGTH_NORMAL, RULER_LINE_LENGTH_VERY_LONG + RULER_LINE_LENGTH_NORMAL),
+                        cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
+            # vertical
+            cv2.line(img, (0, int(i)), (RULER_LINE_LENGTH_VERY_LONG, int(i)), RULER_LABEL_COLOR,
+                     RULER_THICKNESS_VERY_BOLD)
+            cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm), (RULER_LINE_LENGTH_VERY_LONG + 10, int(i)),
+                        cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
+        elif counter % 50 == 0:
+            # horizontal
+            cv2.line(img, (int(i), 0), (int(i), RULER_LINE_LENGTH_VERY_LONG), RULER_LINE_COLOR, RULER_THICKNESS_BOLD)
+            if scale_in_dpmm > RULER_05_LABEL_LIMIT_PX:
+                cv2.putText(img, "{:.2f}mm".format(i / scale_in_dpmm),
+                            (int(i) - RULER_LINE_LENGTH_NORMAL, RULER_LINE_LENGTH_VERY_LONG + RULER_LINE_LENGTH_NORMAL),
+                            cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
+            # vertical
+            cv2.line(img, (0, int(i)), (RULER_LINE_LENGTH_VERY_LONG, int(i)), RULER_LINE_COLOR, RULER_THICKNESS_BOLD)
+            cv2.putText(img, "{:.2f}mm".format(i / scale_in_dpmm), (RULER_LINE_LENGTH_VERY_LONG + 10, int(i)),
+                        cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
+        elif counter % 10 == 0:
+            # horizontal
+            cv2.line(img, (int(i), 0), (int(i), RULER_LINE_LENGTH_LONG), RULER_LINE_COLOR, RULER_THICKNESS_NORMAL)
+            # vertical
+            cv2.line(img, (0, int(i)), (RULER_LINE_LENGTH_LONG, int(i)), RULER_LINE_COLOR, RULER_THICKNESS_NORMAL)
+        elif scale_in_dpmm > RULER_05_LABEL_LIMIT_PX:
+            # horizontal
+            cv2.line(img, (int(i), 0), (int(i), RULER_LINE_LENGTH_SHORT), RULER_LINE_COLOR, RULER_THICKNESS_LIGHT)
+            # vertical
+            cv2.line(img, (0, int(i)), (RULER_LINE_LENGTH_SHORT, int(i)), RULER_LINE_COLOR, RULER_THICKNESS_LIGHT)
+        i += scale_in_dpmm / 100
+        counter += 1
+    return img
+
+
+def draw_rulers_with_labels_on_the_img(original_img, scale_in_dpmm):
     img = original_img.copy()
     i = 0
     counter = 0
@@ -796,36 +846,36 @@ def draw_rulers_with_labels(original_img, one_mm_in_px):
             # horizontal
             cv2.line(img, (int(i), 0), (int(i), RULER_LINE_LENGTH_VERY_LONG), RULER_LABEL_COLOR,
                      RULER_THICKNESS_VERY_BOLD)
-            cv2.putText(img, "{:.1f}mm".format(i / one_mm_in_px),
+            cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm),
                         (int(i) - RULER_LINE_LENGTH_NORMAL, RULER_LINE_LENGTH_VERY_LONG + RULER_LINE_LENGTH_NORMAL),
                         cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
             # vertical
             cv2.line(img, (0, int(i)), (RULER_LINE_LENGTH_VERY_LONG, int(i)), RULER_LABEL_COLOR,
                      RULER_THICKNESS_VERY_BOLD)
-            cv2.putText(img, "{:.1f}mm".format(i / one_mm_in_px), (RULER_LINE_LENGTH_VERY_LONG + 10, int(i)),
+            cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm), (RULER_LINE_LENGTH_VERY_LONG + 10, int(i)),
                         cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
         elif counter % 50 == 0:
             # horizontal
             cv2.line(img, (int(i), 0), (int(i), RULER_LINE_LENGTH_VERY_LONG), RULER_LINE_COLOR, RULER_THICKNESS_BOLD)
-            if one_mm_in_px > RULER_05_LABEL_LIMIT_PX:
-                cv2.putText(img, "{:.2f}mm".format(i / one_mm_in_px),
+            if scale_in_dpmm > RULER_05_LABEL_LIMIT_PX:
+                cv2.putText(img, "{:.2f}mm".format(i / scale_in_dpmm),
                             (int(i) - RULER_LINE_LENGTH_NORMAL, RULER_LINE_LENGTH_VERY_LONG + RULER_LINE_LENGTH_NORMAL),
                             cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
             # vertical
             cv2.line(img, (0, int(i)), (RULER_LINE_LENGTH_VERY_LONG, int(i)), RULER_LINE_COLOR, RULER_THICKNESS_BOLD)
-            cv2.putText(img, "{:.2f}mm".format(i / one_mm_in_px), (RULER_LINE_LENGTH_VERY_LONG + 10, int(i)),
+            cv2.putText(img, "{:.2f}mm".format(i / scale_in_dpmm), (RULER_LINE_LENGTH_VERY_LONG + 10, int(i)),
                         cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
         elif counter % 10 == 0:
             # horizontal
             cv2.line(img, (int(i), 0), (int(i), RULER_LINE_LENGTH_LONG), RULER_LINE_COLOR, RULER_THICKNESS_NORMAL)
             # vertical
             cv2.line(img, (0, int(i)), (RULER_LINE_LENGTH_LONG, int(i)), RULER_LINE_COLOR, RULER_THICKNESS_NORMAL)
-        elif one_mm_in_px > RULER_05_LABEL_LIMIT_PX:
+        elif scale_in_dpmm > RULER_05_LABEL_LIMIT_PX:
             # horizontal
             cv2.line(img, (int(i), 0), (int(i), RULER_LINE_LENGTH_SHORT), RULER_LINE_COLOR, RULER_THICKNESS_LIGHT)
             # vertical
             cv2.line(img, (0, int(i)), (RULER_LINE_LENGTH_SHORT, int(i)), RULER_LINE_COLOR, RULER_THICKNESS_LIGHT)
-        i += one_mm_in_px / 100
+        i += scale_in_dpmm / 100
         counter += 1
     return img
 
@@ -839,7 +889,7 @@ def draw_calculated_img(original_img, dot1, dot2, scale_one_mm_in_px, window_nam
     label_above = "calculated_scale 1 mm = {:.2f} px".format(scale_one_mm_in_px)
     label_under = "line length = {:.2f} px = ".format(line_length) + "{:.2f} mm".format(
         line_length / scale_one_mm_in_px)
-    img = draw_rulers_with_labels(img, scale_one_mm_in_px)
+    img = draw_rulers_with_labels_on_the_img(img, scale_one_mm_in_px)
     draw_line_with_label(img, line, label_above, label_under)
     draw_box_with_corners(dot1, img)
     draw_box_with_corners(dot2, img)
