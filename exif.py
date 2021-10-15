@@ -15,28 +15,6 @@ def read_tag_value(tag, source_file):
     return out.strip()
 
 
-def read_user_comment_tags(source_file):
-    out = read_tag_value(user_comment, source_file)
-    print("exif.read_user_comment_tags:", out)
-    tags = out.split(";")
-    subject_number = ""
-    research_point_name = ""
-    depth = ""
-    humidity = ""
-    zoom = ""
-    spectrum = ""
-    try:
-        subject_number = tags[0]
-        research_point_name = tags[1]
-        depth = tags[2]
-        humidity = tags[3]
-        zoom = tags[4]
-        spectrum = tags[5]
-    except IndexError as e:
-        pass
-    return subject_number, research_point_name, depth, humidity, zoom, spectrum
-
-
 def write_tag_value(tag, value, source_file):
     write_args = ["exiftool", "-overwrite_original", f"-{tag}={value}", f"{source_file}"]
     print(f"Exif write: {tag} = {value}")
@@ -46,14 +24,13 @@ def write_tag_value(tag, value, source_file):
     # print(f"Exif write: {tag} = {value}")
 
 
-def write_resolution_tags(path_to_file, original_file_path, scale_in_dpmm):
+def write_resolution_tags(path_to_file, scale_in_dpmm, original_comment):
     if scale_in_dpmm < 0:
         return
     else:
         dpi = 25.4 * scale_in_dpmm
         formatted_scale = "{:.0f}".format(scale_in_dpmm)
-        comment = read_tag_value("UserComment", original_file_path)
-        final_comment = f"{comment}calc{formatted_scale}dpmm;"
+        final_comment = f"{original_comment}calc{formatted_scale}dpmm;"
         args = f"exiftool -overwrite_original" \
                f" -XResolution={dpi}" \
                f" -YResolution={dpi}" \
@@ -88,6 +65,13 @@ def delete_all_tags(source_file):
     print("exif.delete_all_tags:", out)
 
 
+def copy_all_tags(source_file, destination_file):
+    args = f"exiftool -overwrite_original -TagsFromFile {source_file} -all:all>all:all {destination_file}"
+    out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                universal_newlines=True).communicate()
+    print("exif.copy_all_tags:", out)
+
+
 def set_new_dpmm(dpmm, source_file):
     dpmm_pattern = r"\d+dpmm"
     new_dpmm = f"{dpmm}dpmm"
@@ -107,25 +91,6 @@ def set_new_dpmm(dpmm, source_file):
 def is_blank(my_string):
     return not (my_string and my_string.strip())
 
-
-def copy_all_tags(source_file, destination_file):
-    args = f"exiftool -overwrite_original -TagsFromFile {source_file} -all:all>all:all {destination_file}"
-    out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                universal_newlines=True).communicate()
-    print("exif.copy_all_tags:", out)
-
-# write_tag_value(xp_comment, "0;graw01;0m;DRY;zoom-in;IR;706dpmm;")
-# set_new_dpmm(123)
-# print_all_tags("gps_coords_inside.jpg")
-# print_tag_value(image_description, "gps_coords_inside.jpg")
-# print_tag_value(user_comment, "gps_coords_inside.jpg")
-# readied_comment = read_tag_value(user_comment, "gps_coords_inside.jpg")
-# tags = str(readied_comment).split(";")
-# read_user_comment_tags("gps_coords_inside.jpg")
-# print(tags[1])
-# for tag in tags:
-#     print(tag)
-# print_all_tags("gps_coords_inside.jpg")
 
 # subprocess.call(f"exiftool -s -s -s -Artist out.jpg")
 # subprocess.call(f"exiftool -overwrite_original"

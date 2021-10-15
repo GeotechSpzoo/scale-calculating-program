@@ -1,4 +1,5 @@
 import os
+import sys
 
 import cv2
 import imutils
@@ -6,6 +7,7 @@ import numpy as np
 from imutils import contours as cont
 from imutils import perspective
 from scipy.spatial import distance as dist
+from sys import exit
 
 import exif
 
@@ -29,6 +31,16 @@ ZOOM_IN_HEIGHT_MILLIMETERS = PHOTO_HEIGHT_PIXELS / ZOOM_IN_MILLIMETER_IN_PIXELS 
 ZOOM_OUT_MILLIMETER_IN_PIXELS = 100  # 1mm = 100px
 ZOOM_OUT_WIDTH_MILLIMETERS = PHOTO_WIDTH_PIXELS / ZOOM_OUT_MILLIMETER_IN_PIXELS  # = 12,80 mm
 ZOOM_OUT_HEIGHT_MILLIMETERS = PHOTO_HEIGHT_PIXELS / ZOOM_OUT_MILLIMETER_IN_PIXELS  # = 10,24 mm
+
+
+def prepare_working_dir():
+    if getattr(sys, 'frozen', False):
+        application_path = os.path.dirname(sys.executable)
+    elif __file__:
+        application_path = os.path.dirname(__file__)
+    else:
+        application_path = os.getcwd()
+    os.chdir(application_path)
 
 
 def crop_dots(img, window_name):
@@ -867,8 +879,12 @@ def exif_get_user_comment(source_file):
     return exif.read_tag_value(exif.user_comment, source_file)
 
 
-def exif_update_resolution_tags(path_to_file, original_file_path, scale_in_dpmm):
-    exif.write_resolution_tags(path_to_file, original_file_path, scale_in_dpmm)
+def exif_get_subject_number_with_name(source_file):
+    return exif.read_tag_value(exif.image_description, source_file)
+
+
+def exif_update_resolution_tags(path_to_file, scale_in_dpmm, original_comment):
+    exif.write_resolution_tags(path_to_file, scale_in_dpmm, original_comment)
 
 
 def add_scale_to_file_name(output_samples_path_to_file, calculated_scale_one_mm_in_px):
@@ -917,9 +933,26 @@ def draw_documentation_info(img, text):
     return merged
 
 
-def prepare_documentation_info(original_file_path):
-    subject_number, research_point_name, depth, humidity, zoom, spectrum = exif.read_user_comment_tags(
-        original_file_path)
-    subject_number_and_name = exif.read_tag_value(exif.image_description, original_file_path)
-    result_text = f"{subject_number_and_name} - {research_point_name} - {depth} - {humidity} - {spectrum}"
+def prepare_documentation_info(original_comment, subject_number_with_name):
+    tags = original_comment.split(";")
+    research_point_name = ""
+    depth = ""
+    humidity = ""
+    spectrum = ""
+    try:
+        research_point_name = tags[1]
+        depth = tags[2]
+        humidity = tags[3]
+        spectrum = tags[5]
+    except IndexError as e:
+        pass
+    result_text = f"{subject_number_with_name} - {research_point_name} - {depth} - {humidity} - {spectrum}"
     return result_text
+
+
+def math_abs(number):
+    return np.abs(number)
+
+
+def sys_exit():
+    exit(0)
