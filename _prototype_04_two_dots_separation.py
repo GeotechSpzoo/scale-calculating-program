@@ -57,22 +57,28 @@ def calculate_scale(original_file_folder, main_subject_folder, original_file_nam
     calculated_file_folder = main_subject_folder + "_calculated"
     suffix_for_calculated_file = ".jpg"
     wait = False
+    original_comment = f.exif_get_user_comment(original_file_path)
     print(f"Calculating scale for:\n {original_file_path}\n")
     is_dots_found, original_img, scale_calculated_one_mm_in_px, suffix_for_calculated_file = image_processing(
         calculated_file_folder, is_zoom_in, original_file_name, original_file_path, scale_calculated_one_mm_in_px,
         suffix_for_calculated_file, wait)
     # documentation output
     documentation_img = f.crop_document(original_img, original_file_path)
+    documentation_info = f.prepare_documentation_info(original_file_path)
     if is_dots_found:
         documentation_img = f.draw_rulers_with_labels(documentation_img, scale_calculated_one_mm_in_px)
-        f.draw_scale_info(documentation_img, "skala obliczona 1mm = {:.0f}px".format(scale_calculated_one_mm_in_px))
+        documentation_img = f.draw_documentation_info(documentation_img, documentation_info +
+                                                      " - skala obliczona 1mm = {:.0f}px"
+                                                      .format(scale_calculated_one_mm_in_px))
     else:
         if is_zoom_in:
             documentation_img = f.draw_rulers_with_labels(documentation_img, ZOOM_IN_DEFAULT_SCALE_IN_PIXELS)
-            f.draw_scale_info(documentation_img, f"skala domyslna 1mm = {ZOOM_IN_DEFAULT_SCALE_IN_PIXELS}px +- 3%")
+            documentation_img = f.draw_documentation_info(documentation_img,
+                                                          documentation_info + f" - skala domyslna 1mm = {ZOOM_IN_DEFAULT_SCALE_IN_PIXELS}px +- 3%")
         else:
             documentation_img = f.draw_rulers_with_labels(documentation_img, ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS)
-            f.draw_scale_info(documentation_img, f"skala domyslna 1mm = {ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS}px +- 13%")
+            documentation_img = f.draw_documentation_info(documentation_img, documentation_info
+                                                          + f" - skala domyslna 1mm = {ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS}px +- 13%")
     save_image_with_exif_data(scale_calculated_one_mm_in_px, documentation_file_folder, documentation_img,
                               original_file_name, original_file_path, suffix_for_calculated_file)
     documentation_output = documentation_file_folder
@@ -134,7 +140,7 @@ def save_image_with_exif_data(scale_calculated_one_mm_in_px, file_folder, img,
     file_path = os.path.join(file_folder, original_file_name.replace(".jpg", suffix_for_calculated_file))
     f.save_photo(img, file_folder, file_path, override=True)
     f.exif_copy_all_tags(original_file_path, file_path)
-    f.exif_update_resolution_tags(file_path, scale_calculated_one_mm_in_px)
+    f.exif_update_resolution_tags(file_path, original_file_path, scale_calculated_one_mm_in_px)
 
 
 def find_ref_calibration_dots(blurred, gray, input_file, is_zoom_in, left_dots, right_dots,

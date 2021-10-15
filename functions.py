@@ -864,22 +864,27 @@ def exif_copy_all_tags(source_file, destination_file):
     exif.copy_all_tags(source_file, destination_file)
 
 
-def exif_update_resolution_tags(path_to_file, scale_in_dpmm):
+def exif_get_user_comment(source_file):
+    return exif.read_tag_value(exif.user_comment, source_file)
+
+
+def exif_update_resolution_tags(path_to_file, original_file_path, scale_in_dpmm):
     if scale_in_dpmm < 0:
         return
     else:
         dpi = 25.4 * scale_in_dpmm
         formatted_scale = "{:.0f}".format(scale_in_dpmm)
-        comment = exif.read_tag_value("UserComment", path_to_file)
+        print("path_to_file:", path_to_file)
+        comment = exif.read_tag_value("UserComment", original_file_path)
         final_comment = f"{comment}calc{formatted_scale}dpmm;"
-        args = f"exiftool -q -q -overwrite_original"
-        f" -XResolution={dpi}"
-        f" -YResolution={dpi}"
-        f" -ResolutionUnit=inches"
-        f" -ProcessingSoftware=PythonOpenCV"
-        f" -XPComment={final_comment}"
-        f" -UserComment={final_comment}"
-        f" {path_to_file}"
+        args = f"exiftool -q -q -overwrite_original" \
+               f" -XResolution={dpi}" \
+               f" -YResolution={dpi}" \
+               f" -ResolutionUnit=inches" \
+               f" -ProcessingSoftware=PythonOpenCV" \
+               f" -XPComment={final_comment}" \
+               f" -UserComment={final_comment}" \
+               f" {path_to_file}"
         subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                          universal_newlines=True)
 
@@ -921,6 +926,18 @@ def create_report(report_file_path, calculated_photos_with_scale, number_of_proc
         report.write(report_content)
 
 
-def draw_scale_info(img, text):
+def draw_documentation_info(img, text):
     height, width = image_resolution(img)
-    draw_text(img, text, int(width / 2), int(height - 5), (0, 0, 0), 0.8, 2)
+    merged_height = height + 32
+    black_img = create_bgr_black_img(merged_height, width)
+    merged = merge(black_img, img, 0, 0)
+    draw_text(merged, text, 10, int(merged_height - 10), (255, 255, 255), 0.7, 2)
+    return merged
+
+
+def prepare_documentation_info(original_file_path):
+    subject_number, research_point_name, depth, humidity, zoom, spectrum = exif.read_user_comment_tags(
+        original_file_path)
+    subject_number_and_name = exif.read_tag_value(exif.image_description, original_file_path)
+    result_text = f"{subject_number_and_name} - {research_point_name} - {depth} - {humidity} - {spectrum}"
+    return result_text
