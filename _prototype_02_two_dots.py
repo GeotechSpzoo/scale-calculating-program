@@ -64,21 +64,21 @@ def calculate_scale(path_to_photo_folder, main_subject_folder, photo_file_name):
             abort_message("REF OBJECT (calibration_dot2) NOT FOUND!")
         return -1
     if is_zoom_in:
-        calculated_scale_one_mm_in_px = f.calculate_scale(dot1, dot2, ZOOM_IN_REF_LINE_LENGTH_IN_MM, gray,
-                                                          input_file, wait=wait)
+        calculated_scale_in_dpmm = f.calculate_scale(dot1, dot2, ZOOM_IN_REF_LINE_LENGTH_IN_MM, gray,
+                                                     input_file, wait=wait)
     else:
-        calculated_scale_one_mm_in_px = f.calculate_scale(dot1, dot2, ZOOM_OUT_REF_LINE_LENGTH_IN_MM, gray,
-                                                          input_file, wait=wait)
-    img_with_a_ruler = f.draw_calculated_img(img, dot1, dot2, calculated_scale_one_mm_in_px, input_file, wait=wait,
+        calculated_scale_in_dpmm = f.calculate_scale(dot1, dot2, ZOOM_OUT_REF_LINE_LENGTH_IN_MM, gray,
+                                                     input_file, wait=wait)
+    img_with_a_ruler = f.draw_calculated_img(img, dot1, dot2, calculated_scale_in_dpmm, input_file, wait=wait,
                                              show_image=wait)
     output_folder = main_subject_folder + "_scale_calculated\\"
     output_file_name = "ruler_" + photo_file_name.replace(".jpg",
-                                                          "_{:.0f}dpmm.jpg".format(calculated_scale_one_mm_in_px))
+                                                          "_{:.0f}dpmm.jpg".format(calculated_scale_in_dpmm))
     output_path_to_file = output_folder + output_file_name
     f.save_photo(img_with_a_ruler, output_folder, output_path_to_file, override=True)
     f.exif_copy_all_tags(input_file, output_path_to_file)
-    f.exif_update_resolution_tags(output_path_to_file, calculated_scale_one_mm_in_px)
-    return calculated_scale_one_mm_in_px
+    f.exif_update_resolution_tags(output_path_to_file, input_file, calculated_scale_in_dpmm)
+    return calculated_scale_in_dpmm
 
 
 def abort_message(message):

@@ -1,5 +1,4 @@
 import os
-import subprocess
 
 import cv2
 import imutils
@@ -869,24 +868,7 @@ def exif_get_user_comment(source_file):
 
 
 def exif_update_resolution_tags(path_to_file, original_file_path, scale_in_dpmm):
-    if scale_in_dpmm < 0:
-        return
-    else:
-        dpi = 25.4 * scale_in_dpmm
-        formatted_scale = "{:.0f}".format(scale_in_dpmm)
-        print("path_to_file:", path_to_file)
-        comment = exif.read_tag_value("UserComment", original_file_path)
-        final_comment = f"{comment}calc{formatted_scale}dpmm;"
-        args = f"exiftool -q -q -overwrite_original" \
-               f" -XResolution={dpi}" \
-               f" -YResolution={dpi}" \
-               f" -ResolutionUnit=inches" \
-               f" -ProcessingSoftware=PythonOpenCV" \
-               f" -XPComment={final_comment}" \
-               f" -UserComment={final_comment}" \
-               f" {path_to_file}"
-        subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                         universal_newlines=True)
+    exif.write_resolution_tags(path_to_file, original_file_path, scale_in_dpmm)
 
 
 def add_scale_to_file_name(output_samples_path_to_file, calculated_scale_one_mm_in_px):

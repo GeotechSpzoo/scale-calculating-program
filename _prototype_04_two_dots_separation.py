@@ -50,7 +50,7 @@ user_abort_message = "Program przerwany po wpisaniu 'q' przez użytkownika."
 def calculate_scale(original_file_folder, main_subject_folder, original_file_name):
     global ai_output, documentation_output
     is_zoom_in = ZOOM_IN in current_file_name
-    scale_calculated_one_mm_in_px = -1
+    calculated_scale_in_dpmm = -1
     original_file_path = os.path.join(original_file_folder, original_file_name)
     ai_file_folder = main_subject_folder + "_ai"
     documentation_file_folder = main_subject_folder + "_documentation"
@@ -59,17 +59,17 @@ def calculate_scale(original_file_folder, main_subject_folder, original_file_nam
     wait = False
     original_comment = f.exif_get_user_comment(original_file_path)
     print(f"Calculating scale for:\n {original_file_path}\n")
-    is_dots_found, original_img, scale_calculated_one_mm_in_px, suffix_for_calculated_file = image_processing(
-        calculated_file_folder, is_zoom_in, original_file_name, original_file_path, scale_calculated_one_mm_in_px,
+    is_dots_found, original_img, calculated_scale_in_dpmm, suffix_for_calculated_file = image_processing(
+        calculated_file_folder, is_zoom_in, original_file_name, original_file_path, calculated_scale_in_dpmm,
         suffix_for_calculated_file, wait)
     # documentation output
     documentation_img = f.crop_document(original_img, original_file_path)
     documentation_info = f.prepare_documentation_info(original_file_path)
     if is_dots_found:
-        documentation_img = f.draw_rulers_with_labels(documentation_img, scale_calculated_one_mm_in_px)
+        documentation_img = f.draw_rulers_with_labels(documentation_img, calculated_scale_in_dpmm)
         documentation_img = f.draw_documentation_info(documentation_img, documentation_info +
                                                       " - skala obliczona 1mm = {:.0f}px"
-                                                      .format(scale_calculated_one_mm_in_px))
+                                                      .format(calculated_scale_in_dpmm))
     else:
         if is_zoom_in:
             documentation_img = f.draw_rulers_with_labels(documentation_img, ZOOM_IN_DEFAULT_SCALE_IN_PIXELS)
@@ -79,15 +79,15 @@ def calculate_scale(original_file_folder, main_subject_folder, original_file_nam
             documentation_img = f.draw_rulers_with_labels(documentation_img, ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS)
             documentation_img = f.draw_documentation_info(documentation_img, documentation_info
                                                           + f" - skala domyslna 1mm = {ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS}px +- 13%")
-    save_image_with_exif_data(scale_calculated_one_mm_in_px, documentation_file_folder, documentation_img,
+    save_image_with_exif_data(calculated_scale_in_dpmm, documentation_file_folder, documentation_img,
                               original_file_name, original_file_path, suffix_for_calculated_file)
     documentation_output = documentation_file_folder
     # ai output
     ai_img = f.crop_ai(original_img, original_file_path)
-    save_image_with_exif_data(scale_calculated_one_mm_in_px, ai_file_folder, ai_img,
+    save_image_with_exif_data(calculated_scale_in_dpmm, ai_file_folder, ai_img,
                               original_file_name, original_file_path, suffix_for_calculated_file)
     ai_output = ai_file_folder
-    return scale_calculated_one_mm_in_px
+    return calculated_scale_in_dpmm
 
 
 def image_processing(calculated_file_folder, is_zoom_in, original_file_name, original_file_path,
