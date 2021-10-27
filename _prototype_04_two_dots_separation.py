@@ -267,8 +267,9 @@ def sys_start_program():
         sys_start_program()
 
 
-# start_program()
-# end_program("test end")
+# testing code
+# sys_start_program()
+# sys_end_program("test end")
 
 
 f.prepare_working_dir()

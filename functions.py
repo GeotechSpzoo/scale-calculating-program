@@ -1052,6 +1052,13 @@ def prepare_documentation_info(original_comment, subject_number_with_name):
     return result_text
 
 
+def exif_rewrite_user_comment(current_file_name, file_folder_path):
+    path_to_file = os.path.join(file_folder_path, current_file_name)
+    user_comment = exif_get_user_comment(path_to_file)
+    print("user_comment", user_comment)
+    exif.write_tag_value(exif.user_comment, user_comment.replace("706", "765").replace("760", "765"), path_to_file)
+
+
 def math_abs(number):
     return np.abs(number)
 
