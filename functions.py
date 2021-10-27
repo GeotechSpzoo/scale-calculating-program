@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 
 import cv2
 import imutils
@@ -769,7 +770,6 @@ def calculate_scale(dot1, dot2, ref_dist, gray, window_name, wait=False):
     return scale_one_mm_in_px
 
 
-RULER_THICKNESS_VERY_BOLD = 3
 RULER_THICKNESS_BOLD = 3
 RULER_THICKNESS_NORMAL = 2
 RULER_THICKNESS_LIGHT = 1
@@ -784,7 +784,7 @@ RULER_LINE_COLOR_OUTSIDE = (255, 255, 255)
 RULER_LABEL_COLOR = (255, 255, 255)
 
 RULER_LABEL_SIZE = 0.5
-RULER_LABEL_THICKNESS = 2
+RULER_LABEL_THICKNESS = 1
 
 RULER_05_LABEL_LIMIT_PX = 200
 
@@ -812,14 +812,14 @@ def draw_rulers_with_labels_outside_the_img(original_img, scale_in_dpmm):
             # horizontal
             cv2.line(img, (int(horizontal_i), horizontal_y),
                      (int(horizontal_i), horizontal_y - RULER_LINE_LENGTH_VERY_LONG), RULER_LABEL_COLOR,
-                     RULER_THICKNESS_VERY_BOLD)
+                     RULER_THICKNESS_BOLD)
             cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm),
                         (int(horizontal_i) - RULER_LINE_LENGTH_NORMAL, int(30 * RULER_LABEL_SIZE)),
                         cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
             # vertical
             cv2.line(img, (vertical_y, int(vertical_i)), (vertical_y - RULER_LINE_LENGTH_VERY_LONG, int(vertical_i)),
                      RULER_LABEL_COLOR,
-                     RULER_THICKNESS_VERY_BOLD)
+                     RULER_THICKNESS_BOLD)
             cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm), (5, int(vertical_i - 15 * RULER_LABEL_SIZE)),
                         cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
         # 0.5 mm
@@ -891,13 +891,13 @@ def draw_rulers_with_labels_on_the_img(original_img, scale_in_dpmm):
         if counter % 100 == 0:
             # horizontal
             cv2.line(img, (int(i), 0), (int(i), RULER_LINE_LENGTH_VERY_LONG), RULER_LABEL_COLOR,
-                     RULER_THICKNESS_VERY_BOLD)
+                     RULER_THICKNESS_BOLD)
             cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm),
                         (int(i) - RULER_LINE_LENGTH_NORMAL, RULER_LINE_LENGTH_VERY_LONG + RULER_LINE_LENGTH_NORMAL),
                         cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
             # vertical
             cv2.line(img, (0, int(i)), (RULER_LINE_LENGTH_VERY_LONG, int(i)), RULER_LABEL_COLOR,
-                     RULER_THICKNESS_VERY_BOLD)
+                     RULER_THICKNESS_BOLD)
             cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm), (RULER_LINE_LENGTH_VERY_LONG + 10, int(i)),
                         cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
         elif counter % 50 == 0:
@@ -1026,12 +1026,32 @@ def create_report(report_file_path, calculated_photos_with_scale, number_of_proc
         report.write(report_content)
 
 
+def remove_non_ascii_chars(text):
+    text = re.sub('[^\x20-\x7F]', '', text)
+    return text
+
+
+def replace_polish_chars(text):
+    result = text.replace("Ą", "A").replace("ą", "a") \
+        .replace("Ć", "C").replace("ć", "c") \
+        .replace("Ę", "E").replace("ę", "e") \
+        .replace("Ł", "L").replace("ł", "l") \
+        .replace("Ń", "N").replace("ń", "n") \
+        .replace("Ó", "O").replace("ó", "o") \
+        .replace("Ś", "S").replace("ś", "s") \
+        .replace("Ż", "Z").replace("ż", "z") \
+        .replace("Ź", "Z").replace("ź", "z")
+    return result
+
+
 def draw_documentation_info(img, text):
+    text = replace_polish_chars(text)
+    text = remove_non_ascii_chars(text)
     height, width = image_resolution(img)
     merged_height = height + 32
     black_img = create_bgr_black_img(merged_height, width)
     merged = merge(black_img, img, 0, 0)
-    draw_text(merged, text, VERTICAL_RULER_WIDTH + 10, int(merged_height - 10), (255, 255, 255), 0.7, 2)
+    draw_text(merged, text, VERTICAL_RULER_WIDTH + 5, int(merged_height - 10), (255, 255, 255), 0.7, 1)
     return merged
 
 
