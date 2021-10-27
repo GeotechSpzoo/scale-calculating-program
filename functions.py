@@ -788,8 +788,8 @@ RULER_LABEL_THICKNESS = 2
 
 RULER_05_LABEL_LIMIT_PX = 200
 
-VERTICAL_RULER_WIDTH = 104
-HORIZONTAL_RULER_HEIGHT = 62
+VERTICAL_RULER_WIDTH = 84
+HORIZONTAL_RULER_HEIGHT = 60
 
 
 def draw_rulers_with_labels_outside_the_img(original_img, scale_in_dpmm):
@@ -820,7 +820,7 @@ def draw_rulers_with_labels_outside_the_img(original_img, scale_in_dpmm):
             cv2.line(img, (vertical_y, int(vertical_i)), (vertical_y - RULER_LINE_LENGTH_VERY_LONG, int(vertical_i)),
                      RULER_LABEL_COLOR,
                      RULER_THICKNESS_VERY_BOLD)
-            cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm), (5, int(vertical_i)),
+            cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm), (5, int(vertical_i - 15 * RULER_LABEL_SIZE)),
                         cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
         # 0.5 mm
         elif counter % 50 == 0:
@@ -828,7 +828,7 @@ def draw_rulers_with_labels_outside_the_img(original_img, scale_in_dpmm):
                 # horizontal
                 cv2.line(img, (int(horizontal_i), horizontal_y),
                          (int(horizontal_i), horizontal_y - RULER_LINE_LENGTH_VERY_LONG), RULER_LINE_COLOR_OUTSIDE,
-                         RULER_THICKNESS_BOLD)
+                         RULER_THICKNESS_NORMAL)
                 cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm),
                             (int(horizontal_i) - RULER_LINE_LENGTH_NORMAL, int(30 * RULER_LABEL_SIZE)),
                             cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
@@ -845,7 +845,7 @@ def draw_rulers_with_labels_outside_the_img(original_img, scale_in_dpmm):
                 cv2.line(img, (vertical_y, int(vertical_i)), (vertical_y - RULER_LINE_LENGTH_LONG, int(vertical_i)),
                          RULER_LINE_COLOR_OUTSIDE, RULER_THICKNESS_NORMAL)
             # vertical
-            cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm), (5, int(vertical_i)),
+            cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm), (5, int(vertical_i - 15 * RULER_LABEL_SIZE)),
                         cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
         # 0.1 mm
         elif counter % 10 == 0:
@@ -857,6 +857,8 @@ def draw_rulers_with_labels_outside_the_img(original_img, scale_in_dpmm):
                 # vertical
                 cv2.line(img, (vertical_y, int(vertical_i)), (vertical_y - RULER_LINE_LENGTH_LONG, int(vertical_i)),
                          RULER_LINE_COLOR_OUTSIDE, RULER_THICKNESS_NORMAL)
+                cv2.putText(img, "{:.1f}mm".format(i / scale_in_dpmm), (5, int(vertical_i - 15 * RULER_LABEL_SIZE)),
+                            cv2.FONT_HERSHEY_SIMPLEX, RULER_LABEL_SIZE, RULER_LABEL_COLOR, RULER_LABEL_THICKNESS)
             else:
                 # horizontal
                 cv2.line(img, (int(horizontal_i), horizontal_y),
@@ -1046,7 +1048,7 @@ def prepare_documentation_info(original_comment, subject_number_with_name):
         spectrum = tags[5]
     except IndexError as e:
         pass
-    result_text = f"> {subject_number_with_name} > {research_point_name} > {depth} > {humidity} > {spectrum}"
+    result_text = f"{subject_number_with_name} : {research_point_name} : {depth} : {humidity} : {spectrum}"
     return result_text
 
 

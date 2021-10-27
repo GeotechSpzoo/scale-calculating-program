@@ -64,19 +64,19 @@ def calculate_scale(original_file_folder, main_subject_folder, original_file_nam
     if is_dots_found:
         documentation_img = f.draw_rulers_with_labels_outside_the_img(documentation_img, calculated_scale_in_dpmm)
         documentation_img = f.draw_documentation_info(documentation_img, documentation_info +
-                                                      " > skala obliczona 1mm = {:.0f}px"
+                                                      " : skala obliczona 1mm = {:.0f}px"
                                                       .format(calculated_scale_in_dpmm))
     else:
         if is_zoom_in:
             documentation_img = f.draw_rulers_with_labels_outside_the_img(documentation_img,
                                                                           ZOOM_IN_DEFAULT_SCALE_IN_PIXELS)
             documentation_img = f.draw_documentation_info(documentation_img,
-                                                          documentation_info + f" > skala domyslna 1mm = {ZOOM_IN_DEFAULT_SCALE_IN_PIXELS}px +- 3%")
+                                                          documentation_info + f" : skala domyslna 1mm = {ZOOM_IN_DEFAULT_SCALE_IN_PIXELS}px +- 3%")
         else:
             documentation_img = f.draw_rulers_with_labels_outside_the_img(documentation_img,
                                                                           ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS)
             documentation_img = f.draw_documentation_info(documentation_img, documentation_info
-                                                          + f" > skala domyslna 1mm = {ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS}px +- 13%")
+                                                          + f" : skala domyslna 1mm = {ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS}px +- 13%")
     save_image_with_exif_data(calculated_scale_in_dpmm, documentation_file_folder, documentation_img,
                               original_file_name, original_file_path, suffix_for_calculated_file, original_comment)
     documentation_output = documentation_file_folder
