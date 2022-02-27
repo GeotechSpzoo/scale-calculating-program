@@ -79,6 +79,18 @@ def copy_all_tags(source_file, destination_file, print_info=False):
         print("exif.copy_all_tags:", out)
 
 
+def copy_tags_from_filename(destination_file, filename, print_info=False):
+    comment_tags = prepare_comment_tags(filename, print_info)
+    args = f"exiftool -overwrite_original" \
+           f" -XPComment={comment_tags}" \
+           f" -UserComment={comment_tags}" \
+           f" {destination_file}"
+    out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                universal_newlines=True).communicate()
+    if print_info:
+        print("exif.copy_tags_from_filename:", out)
+
+
 def set_new_dpmm(dpmm, source_file, print_info=False):
     dpmm_pattern = r"\d+dpmm"
     new_dpmm = f"{dpmm}dpmm"
@@ -98,7 +110,6 @@ def set_new_dpmm(dpmm, source_file, print_info=False):
 
 def is_blank(my_string):
     return not (my_string and my_string.strip())
-
 
 # subprocess.call(f"exiftool -s -s -s -Artist out.jpg")
 # subprocess.call(f"exiftool -overwrite_original"

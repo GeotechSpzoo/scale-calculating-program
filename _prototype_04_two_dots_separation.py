@@ -2,9 +2,6 @@ import os
 import pathlib
 import functions as f
 
-ZOOM_IN = "zoom-in"
-ZOOM_OUT = "zoom-out"
-
 ZOOM_IN_REF_LINE_LENGTH_IN_MM = 1.4  # millimeters
 ZOOM_OUT_REF_LINE_LENGTH_IN_MM = 7 * 1.4  # millimeters
 
@@ -41,10 +38,12 @@ calculated_photos = []
 report_message = "Analizę zakończono pomyślnie."
 user_abort_message = "Program przerwany po wpisaniu 'q' przez użytkownika."
 
+copy_tags_from_filename = True
+
 
 def calculate_scale(original_file_folder, main_subject_folder, original_file_name):
     global ai_output, documentation_output
-    is_zoom_in = ZOOM_IN in current_file_name
+    is_zoom_in = f.ZOOM_IN in current_file_name
     calculated_scale_in_dpmm = -1
     original_file_path = os.path.join(original_file_folder, original_file_name)
     ai_file_folder = main_subject_folder + "_ai"
@@ -52,7 +51,7 @@ def calculate_scale(original_file_folder, main_subject_folder, original_file_nam
     calculated_file_folder = main_subject_folder + "_calculated"
     suffix_for_calculated_file = ".jpg"
     wait = False
-    original_comment = f.exif_get_user_comment(original_file_path)
+    original_comment = f.exif_get_user_comment(original_file_path, from_filename=True, filename=original_file_name)
     subject_number_with_name = f.exif_get_subject_number_with_name(original_file_path)
     print(f"Calculating scale for:\n {original_file_path}\n")
     is_dots_found, original_img, calculated_scale_in_dpmm, suffix_for_calculated_file = image_processing(
@@ -132,11 +131,17 @@ def image_processing(calculated_file_folder, is_zoom_in, original_file_name, ori
     return is_dots_found, original_img, scale_calculated_one_mm_in_px, suffix_for_calculated_file
 
 
-def save_image_with_exif_data(scale_calculated_one_mm_in_px, file_folder, img,
-                              original_file_name, original_file_path, suffix_for_calculated_file, original_comment):
+def save_image_with_exif_data(scale_calculated_one_mm_in_px,
+                              file_folder,
+                              img,
+                              original_file_name,
+                              original_file_path,
+                              suffix_for_calculated_file,
+                              original_comment):
     file_path = os.path.join(file_folder, original_file_name.replace(".jpg", suffix_for_calculated_file))
     f.save_photo(img, file_folder, file_path, override=True)
-    f.exif_copy_all_tags(original_file_path, file_path)
+    f.exif_copy_all_tags(original_file_path, file_path, tags_from_filename=copy_tags_from_filename,
+                         filename=original_file_name)
     f.exif_update_resolution_tags(file_path, scale_calculated_one_mm_in_px, original_comment)
 
 
@@ -298,3 +303,5 @@ finally:
 
 # COMPILE COMMAND: 'pyinstaller --onefile --windowed _prototype_04_two_dots_separation.py'
 # COMPILE COMMAND: 'pyinstaller --onefile _prototype_04_two_dots_separation.py'
+# python -m pip install [packagename]
+# py -m pip install [packagename]

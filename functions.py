@@ -12,6 +12,10 @@ from sys import exit
 
 import exif
 
+
+ZOOM_IN = "zoom-in"
+ZOOM_OUT = "zoom-out"
+
 KEY_ESC = 27
 KEY_SPACE = 32
 KEY_BACKSPACE = 8
@@ -973,12 +977,38 @@ def write_image_to_file(img, path_to_file):
     # print("Photo saved to: " + path_to_file)
 
 
-def exif_copy_all_tags(source_file, destination_file):
-    exif.copy_all_tags(source_file, destination_file)
+def exif_copy_all_tags(source_file, destination_file, tags_from_filename=False, filename=""):
+    if tags_from_filename:
+        exif.copy_tags_from_filename(destination_file, filename)
+    else:
+        exif.copy_all_tags(source_file, destination_file)
 
 
-def exif_get_user_comment(source_file):
-    return exif.read_tag_value(exif.user_comment, source_file)
+def exif_get_user_comment(source_file, from_filename=False, filename=""):
+    if from_filename:
+        return prepare_comment_tags(filename)
+    else:
+        return exif.read_tag_value(exif.user_comment, source_file)
+
+
+def prepare_comment_tags(filename, print_info=False):
+    # input filename example: 3144-4_M1-2-p_0.4m_WN_zoom-in_NAT_1.jpg
+    # output tags example: 3144-4;M1-2-p;0.4m;WN;zoom-in;NAT;765dpmm;
+    # output tags example: 3144-4;M1-2-p;0.4m;WN;zoom-out;NAT;1000dpmm;
+    # original output tags example: 000;o1;2.0m;WN;zoom-in;NAT;760dpmm;
+    result = filename.replace("_", ";") \
+        .replace("1.jpg", "") \
+        .replace("2.jpg", "") \
+        .replace("3.jpg", "") \
+        .replace("4.jpg", "")
+    if ZOOM_IN in filename:
+        result = result + "765dpmm;"
+    else:
+        result = result + "100dpmm;"
+    if print_info:
+        print("exif.preapre_comment_tags input filename:", filename)
+        print("exif.preapre_comment_tags tags from filename:", result)
+    return result
 
 
 def exif_get_subject_number_with_name(source_file):
