@@ -51,8 +51,9 @@ def calculate_scale(original_file_folder, main_subject_folder, original_file_nam
     calculated_file_folder = main_subject_folder + "_calculated"
     suffix_for_calculated_file = ".jpg"
     wait = False
-    original_comment = f.exif_get_user_comment(original_file_path, from_filename=copy_tags_from_filename, filename=original_file_name)
-    subject_number_with_name = "3144 - Aquanet Marlewo"
+    original_comment = f.exif_get_user_comment(original_file_path, from_filename=copy_tags_from_filename,
+                                               filename=original_file_name)
+    subject_number_with_name = "3144-4 - Aquanet Marlewo"
     # if copy_tags_from_filename:
     #     subject_number_with_name = f.get_subject_full_name(original_comment)
     # else:

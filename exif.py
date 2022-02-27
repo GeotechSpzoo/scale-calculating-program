@@ -18,7 +18,6 @@ def read_tag_value(tag, source_file, print_info=False):
 
 def write_tag_value(tag, value, source_file, print_info=False):
     write_args = ["exiftool", "-overwrite_original", f"-{tag}={value}", f"{source_file}"]
-    print(f"Exif write: {tag} = {value}")
     out, err = subprocess.Popen(write_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                 universal_newlines=True).communicate()
     if print_info:
