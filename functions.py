@@ -977,10 +977,7 @@ def write_image_to_file(img, path_to_file):
     # print("Photo saved to: " + path_to_file)
 
 
-def exif_copy_all_tags(source_file, destination_file, tags_from_filename=False, filename=""):
-    if tags_from_filename:
-        exif.copy_tags_from_filename(destination_file, filename)
-    else:
+def exif_copy_all_tags(source_file, destination_file):
         exif.copy_all_tags(source_file, destination_file)
 
 
@@ -1107,6 +1104,10 @@ def exif_rewrite_user_comment(current_file_name, file_folder_path):
     user_comment = exif_get_user_comment(path_to_file)
     print("user_comment", user_comment)
     exif.write_tag_value(exif.user_comment, user_comment.replace("706", "765").replace("760", "765"), path_to_file)
+
+
+def exif_write_user_comment(destination_file, comment_tags):
+    exif.write_tag_value(exif.user_comment, comment_tags, destination_file)
 
 
 def math_abs(number):

@@ -51,8 +51,12 @@ def calculate_scale(original_file_folder, main_subject_folder, original_file_nam
     calculated_file_folder = main_subject_folder + "_calculated"
     suffix_for_calculated_file = ".jpg"
     wait = False
-    original_comment = f.exif_get_user_comment(original_file_path, from_filename=True, filename=original_file_name)
-    subject_number_with_name = f.exif_get_subject_number_with_name(original_file_path)
+    original_comment = f.exif_get_user_comment(original_file_path, from_filename=copy_tags_from_filename, filename=original_file_name)
+    subject_number_with_name = "3144 - Aquanet Marlewo"
+    # if copy_tags_from_filename:
+    #     subject_number_with_name = f.get_subject_full_name(original_comment)
+    # else:
+    #     subject_number_with_name = f.exif_get_subject_number_with_name(original_file_path)
     print(f"Calculating scale for:\n {original_file_path}\n")
     is_dots_found, original_img, calculated_scale_in_dpmm, suffix_for_calculated_file = image_processing(
         calculated_file_folder, is_zoom_in, original_file_name, original_file_path, calculated_scale_in_dpmm,
@@ -140,8 +144,9 @@ def save_image_with_exif_data(scale_calculated_one_mm_in_px,
                               original_comment):
     file_path = os.path.join(file_folder, original_file_name.replace(".jpg", suffix_for_calculated_file))
     f.save_photo(img, file_folder, file_path, override=True)
-    f.exif_copy_all_tags(original_file_path, file_path, tags_from_filename=copy_tags_from_filename,
-                         filename=original_file_name)
+    f.exif_copy_all_tags(original_file_path, file_path)
+    if copy_tags_from_filename:
+        f.exif_write_user_comment(file_path, original_comment)
     f.exif_update_resolution_tags(file_path, scale_calculated_one_mm_in_px, original_comment)
 
 
