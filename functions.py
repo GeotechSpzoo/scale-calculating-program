@@ -2,6 +2,9 @@ import os
 import sys
 import re
 
+# venv\Scripts\python.exe -m pip install --upgrade pip
+# venv\Scripts\python.exe -m pip install opencv-python
+# pip install opencv-python
 import cv2
 import imutils
 import numpy as np
