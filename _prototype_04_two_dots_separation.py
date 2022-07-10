@@ -303,11 +303,11 @@ except (Exception, KeyboardInterrupt, OSError) as e:
             report_message = f"Prawdopodobnie brakuje pliku 'exiftool.exe'. Przerwano działanie programu: {e}"
             print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania programu.")
             print("\tŚciągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.")
-        else:
-            traceback = traceback.format_exc()
-            report_message = f"{report_message}\n{traceback}"
-            print(traceback)
         print(f"\nERROR:\n{e}\n")
+        print_line()
+        traceback = traceback.format_exc()
+        report_message = f"{report_message}\n{traceback}"
+        print(traceback)
         print_line()
         print("Złapano wyjątek. Program został zatrzymany.")
 finally:

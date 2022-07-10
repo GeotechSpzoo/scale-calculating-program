@@ -10,6 +10,8 @@ def read_tag_value(tag, source_file, print_info=False):
     args = ["exiftool", "-s", "-s", "-s", f"-{tag}", f"{source_file}"]
     out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                 universal_newlines=True).communicate()
+    if err is not None:
+        print(err)
     if print_info:
         print(f"Exif read: {tag} = {out}")
         print("exif.read_tag_value:", out)
@@ -20,6 +22,8 @@ def write_tag_value(tag, value, source_file, print_info=False):
     write_args = ["exiftool", "-overwrite_original", f"-{tag}={value}", f"{source_file}"]
     out, err = subprocess.Popen(write_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                 universal_newlines=True).communicate()
+    if err is not None:
+        print(err)
     if print_info:
         print(f"Exif write: {tag} = {value}")
         print("exif.write_tag_value:", out)
@@ -42,6 +46,8 @@ def write_resolution_tags(path_to_file, scale_in_dpmm, original_comment, print_i
                f" {path_to_file}"
         out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                     universal_newlines=True).communicate()
+        if err is not None:
+            print(err)
         if print_info:
             print("exif.write_resolution_tags:", out)
 
@@ -50,6 +56,8 @@ def print_tag_value(tag, source_file, print_info=False):
     read_args = ["exiftool", f"-{tag}", f"{source_file}"]
     out, err = subprocess.Popen(read_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                 universal_newlines=True).communicate()
+    if err is not None:
+        print(err)
     if print_info:
         print("exif.print_tag_value:", out)
 
@@ -58,6 +66,8 @@ def print_all_tags(source_file, print_info=False):
     args = f"exiftool -a -u -g1 {source_file}"
     out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                 universal_newlines=True).communicate()
+    if err is not None:
+        print(err)
     if print_info:
         print("exif.print_all_tags:", out)
 
@@ -66,6 +76,8 @@ def delete_all_tags(source_file, print_info=False):
     args = f"exiftool -all= {source_file}"
     out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                 universal_newlines=True).communicate()
+    if err is not None:
+        print(err)
     if print_info:
         print("exif.delete_all_tags:", out)
 
@@ -74,6 +86,8 @@ def copy_all_tags(source_file, destination_file, print_info=False):
     args = f"exiftool -overwrite_original -TagsFromFile {source_file} -all:all>all:all {destination_file}"
     out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                 universal_newlines=True).communicate()
+    if err is not None:
+        print(err)
     if print_info:
         print("exif.copy_all_tags:", out)
 
@@ -143,4 +157,4 @@ def is_blank(my_string):
 #                 f" -GPSDOP=012.012"  # Dilution Of Precision (geometric)
 #
 #                 f" out.jpg")
-# subprocess.call(f"exiftool -a -u -g1 out.jpg")
+# subprocess.call(f"exiftool -charset filename=utf8 -a -u -g1 out.jpg")
