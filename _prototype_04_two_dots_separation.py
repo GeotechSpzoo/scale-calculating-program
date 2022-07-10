@@ -1,5 +1,7 @@
 import os
 import pathlib
+import traceback
+
 import functions as f
 
 ZOOM_IN_REF_LINE_LENGTH_IN_MM = 1.4  # millimeters
@@ -297,11 +299,15 @@ except (Exception, KeyboardInterrupt, OSError) as e:
         if len(str(e)) == 0:
             report_message = "Wciśnięto CTRL + C lub przerwano działanie programu z nieznanego powodu."
             e = report_message
-        print(f"\nERROR:\n{e}\n")
-        if "WinError 2" in str(e) and "'" not in str(e):
+        elif "WinError 2" in str(e) and "'" not in str(e):
             report_message = f"Prawdopodobnie brakuje pliku 'exiftool.exe'. Przerwano działanie programu: {e}"
             print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania programu.")
             print("\tŚciągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.")
+        else:
+            traceback = traceback.format_exc()
+            report_message = f"{report_message}\n{traceback}"
+            print(traceback)
+        print(f"\nERROR:\n{e}\n")
         print_line()
         print("Złapano wyjątek. Program został zatrzymany.")
 finally:

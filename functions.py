@@ -226,7 +226,10 @@ def blur_bilateral_filter_min(gray, path, wait=False):
 
 
 def load_image(photo_path, wait=False):
-    loaded = cv2.imread(photo_path, cv2.IMREAD_COLOR)
+    # loaded = cv2.imread(photo_path, cv2.IMREAD_COLOR)
+    # non ASCII chars fix
+    loaded = cv2.imdecode(np.fromfile(photo_path, dtype=np.uint8),
+                   cv2.IMREAD_COLOR)
     if wait:
         cv2.imshow(f"load_image path:{photo_path}", loaded)
         cv2.waitKey(0)
@@ -976,7 +979,10 @@ def save_photo(img_with_a_ruler, path_to_folder, path_to_file, override=True):
 
 
 def write_image_to_file(img, path_to_file):
-    cv2.imwrite(path_to_file, img)
+    # cv2.imwrite(path_to_file, img)
+    # non ASCII chars fix
+    is_success, im_buf_arr = cv2.imencode(".jpg", img)
+    im_buf_arr.tofile(path_to_file)
     # print("Photo saved to: " + path_to_file)
 
 
