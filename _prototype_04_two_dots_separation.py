@@ -50,27 +50,34 @@ calculated_photos = []
 report_message = "Analizę zakończono pomyślnie."
 user_abort_message = "Program przerwany po wpisaniu 'q' przez użytkownika."
 
-copy_tags_from_filename = False
+WAIT = False
+is_exif_comment_tags_empty = False
+is_copy_exif_subject_number_with_name_empty = False
+is_override_subject_number_with_name_enabled = False
+subject_number_with_name_to_override = "override_subject_number_with_name"
 
 
 def calculate_scale(found_jpeg_path: Path, main_subject_folder):
-    global ai_output, documentation_output
+    global ai_output, documentation_output, is_exif_comment_tags_empty, is_copy_exif_subject_number_with_name_empty
     is_zoom_in = f.ZOOM_IN in str(found_jpeg_path)
     calculated_scale_in_dpmm = SCALE_NOT_CALCULATED
     ai_folder_path = Path(main_subject_folder + AI_FOLDER_SUFFIX)
     documentation_folder_path = Path(main_subject_folder + DOCUMENTATION_FOLDER_SUFFIX)
     calculated_folder_path = Path(main_subject_folder + CALCULATED_FOLDER_SUFFIX)
     suffix_for_calculated_file = ".jpg"
-    wait = False
-    original_comment = f.exif_get_user_comment(found_jpeg_path, from_filename=copy_tags_from_filename)
-    if copy_tags_from_filename:
-        subject_number_with_name = f.get_subject_full_name(found_jpeg_path.name)
-    else:
-        subject_number_with_name = f.exif_get_subject_number_with_name(found_jpeg_path)
+    original_comment = f.exif_get_user_comment(found_jpeg_path)
+    if original_comment == "" or not original_comment:
+        # f.prepare_comment_tags_from_filename(source_file.name)
+        is_exif_comment_tags_empty = True
+        original_comment = f.prepare_comment_tags_from_path(found_jpeg_path)
+    subject_number_with_name = f.exif_get_subject_number_with_name(found_jpeg_path)
+    if subject_number_with_name == "" or not subject_number_with_name:
+        is_copy_exif_subject_number_with_name_empty = True
+        subject_number_with_name = subject_number_with_name_to_override
     print(f"Calculating scale for:\n {found_jpeg_path}\n")
     is_dots_found, original_img, calculated_scale_in_dpmm, suffix_for_calculated_file = image_processing(
         calculated_folder_path, is_zoom_in, found_jpeg_path.name, found_jpeg_path, calculated_scale_in_dpmm,
-        suffix_for_calculated_file, wait, original_comment)
+        suffix_for_calculated_file, WAIT, original_comment)
     # documentation output
     documentation_img = f.crop_document(original_img, found_jpeg_path)
     documentation_info = f.prepare_documentation_info(original_comment, subject_number_with_name)
@@ -155,7 +162,8 @@ def save_image_with_exif_data(scale_calculated_one_mm_in_px,
     file_path = os.path.join(file_folder, original_file_name.replace(".jpg", suffix_for_calculated_file))
     f.save_photo(img, file_folder, file_path, override=True)
     f.exif_copy_all_tags(original_file_path, file_path)
-    if copy_tags_from_filename:
+    # todo optimize for one-time exiftool call
+    if is_exif_comment_tags_empty:
         f.exif_write_user_comment(file_path, original_comment)
     f.exif_update_resolution_tags(file_path, scale_calculated_one_mm_in_px, original_comment)
 

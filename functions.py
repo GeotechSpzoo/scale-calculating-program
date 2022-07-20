@@ -232,7 +232,7 @@ def load_image(photo_path, wait=False):
     # loaded = cv2.imread(photo_path, cv2.IMREAD_COLOR)
     # non ASCII chars fix
     loaded = cv2.imdecode(np.fromfile(photo_path, dtype=np.uint8),
-                   cv2.IMREAD_COLOR)
+                          cv2.IMREAD_COLOR)
     if wait:
         cv2.imshow(f"load_image path:{photo_path}", loaded)
         cv2.waitKey(0)
@@ -993,19 +993,16 @@ def exif_copy_all_tags(source_file, destination_file):
     exif.copy_all_tags(source_file, destination_file)
 
 
-def exif_get_user_comment(source_file: Path, from_filename=False):
-    if from_filename:
-        return prepare_comment_tags(source_file.name)
-    else:
-        return exif.read_tag_value(exif.USER_COMMENT, source_file)
+def exif_get_user_comment(source_file: Path):
+    return exif.read_tag_value(exif.USER_COMMENT, source_file)
 
 
 def exif_write_comment_tags_from_filename(destination_file, filename, print_info=False):
-    comment_tags = prepare_comment_tags(filename, print_info)
+    comment_tags = prepare_comment_tags_from_filename(filename, print_info)
     exif.write_comment_tags(destination_file, comment_tags, print_info)
 
 
-def prepare_comment_tags(filename, print_info=False):
+def prepare_comment_tags_from_filename(filename, print_info=False):
     # input filename example: 3144-4_M1-2-p_0.4m_WN_zoom-in_NAT_1.jpg
     # output tags example: 3144-4;M1-2-p;0.4m;WN;zoom-in;NAT;765dpmm;
     # output tags example: 3144-4;M1-2-p;0.4m;WN;zoom-out;NAT;1000dpmm;
@@ -1021,6 +1018,29 @@ def prepare_comment_tags(filename, print_info=False):
         result = result + f"{ZOOM_OUT_MILLIMETER_IN_PIXELS}dpmm;"
     if print_info:
         print("exif.preapre_comment_tags input filename:", filename)
+        print("exif.preapre_comment_tags tags from filename:", result)
+    return result
+
+
+def prepare_comment_tags_from_path(path: Path, print_info=False):
+    # input filename example: 3144-4_M1-2-p_0.4m_WN_zoom-in_NAT_1.jpg
+    # output tags example: 3144-4;M1-2-p;0.4m;WN;zoom-in;NAT;765dpmm;
+    # output tags example: 3144-4;M1-2-p;0.4m;WN;zoom-out;NAT;1000dpmm;
+    # original output tags example: 000;o1;2.0m;WN;zoom-in;NAT;760dpmm;
+    subject_number = path.name.split("_")[0]
+    research_point = path.parts[-6]
+    depth = path.parts[-5]
+    wn = path.parts[-2]
+    zoom = path.parts[-4]
+    spectrum = path.parts[-3]
+    if ZOOM_IN in str(path):
+        scale_dpmm = f"{ZOOM_IN_MILLIMETER_IN_PIXELS}dpmm"
+    else:
+        scale_dpmm = f"{ZOOM_OUT_MILLIMETER_IN_PIXELS}dpmm"
+
+    result = f"{subject_number};{research_point};{depth};{wn};{zoom};{spectrum};{scale_dpmm};"
+    if print_info:
+        print("exif.preapre_comment_tags input filename:", path)
         print("exif.preapre_comment_tags tags from filename:", result)
     return result
 
@@ -1082,7 +1102,7 @@ def create_report(report_file_path, calculated_photos_with_scale, number_of_proc
                      f"przeanalizowanych zdjęć:\n"
     counter = 1
     for (file_name, scale) in calculated_photos_with_scale:
-        file_name = file_name.replace(".jpg", "_{:.0f}dpmm.jpg".format(scale))
+        file_name = file_name.name.replace(".jpg", "_{:.0f}dpmm.jpg".format(scale))
         report_content = report_content + f"{counter}. {file_name}\n"
         counter += 1
     report_content = report_content + report_message + "\n"
