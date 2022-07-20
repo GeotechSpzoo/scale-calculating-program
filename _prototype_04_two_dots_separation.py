@@ -1,8 +1,18 @@
 import os
-import pathlib
+from pathlib import Path
 import traceback
 
 import functions as f
+
+SCALE_NOT_CALCULATED = -1
+
+CALCULATED_FOLDER_SUFFIX = "_calculated"
+
+DOCUMENTATION_FOLDER_SUFFIX = "_documentation"
+
+AI_FOLDER_SUFFIX = "_ai"
+
+REPORT_FILE_NAME = "report.txt"
 
 ZOOM_IN_REF_LINE_LENGTH_IN_MM = 1.4  # millimeters
 ZOOM_OUT_REF_LINE_LENGTH_IN_MM = 7 * 1.4  # millimeters
@@ -22,7 +32,8 @@ ZOOM_IN_MAX_DISTANCE_BETWEEN_DOTS_IN_PX = 1090  # pixels
 ZOOM_IN_DEFAULT_SCALE_IN_PIXELS = 765  # 1mm = 765px
 ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS = 100  # 1mm = 100px
 
-default_user_input_folder = "C:\\Users\\pawel.drelich\\Desktop\\Materialy\\AnalizaObrazu\\SamplePhotosLabo\\Alicja"
+# D:\Praca\Geotech\Zdalna_listopad-luty2022\Metadane\339_T
+default_user_input_folder = "D:\\Praca\\Geotech\\Zdalna_listopad-luty2022\\Metadane\\339_T"
 user_input_folder = ""
 
 ai_output = ""
@@ -30,7 +41,6 @@ documentation_output = ""
 calculated_output = ""
 report_file_path = ""
 
-current_file_name = ""
 current_photo_index = 0
 number_of_photos_to_proceed = 0
 
@@ -40,32 +50,29 @@ calculated_photos = []
 report_message = "Analizę zakończono pomyślnie."
 user_abort_message = "Program przerwany po wpisaniu 'q' przez użytkownika."
 
-copy_tags_from_filename = True
+copy_tags_from_filename = False
 
 
-def calculate_scale(original_file_folder, main_subject_folder, original_file_name):
+def calculate_scale(found_jpeg_path: Path, main_subject_folder):
     global ai_output, documentation_output
-    is_zoom_in = f.ZOOM_IN in current_file_name
-    calculated_scale_in_dpmm = -1
-    original_file_path = os.path.join(original_file_folder, original_file_name)
-    ai_file_folder = main_subject_folder + "_ai"
-    documentation_file_folder = main_subject_folder + "_documentation"
-    calculated_file_folder = main_subject_folder + "_calculated"
+    is_zoom_in = f.ZOOM_IN in str(found_jpeg_path)
+    calculated_scale_in_dpmm = SCALE_NOT_CALCULATED
+    ai_folder_path = Path(main_subject_folder + AI_FOLDER_SUFFIX)
+    documentation_folder_path = Path(main_subject_folder + DOCUMENTATION_FOLDER_SUFFIX)
+    calculated_folder_path = Path(main_subject_folder + CALCULATED_FOLDER_SUFFIX)
     suffix_for_calculated_file = ".jpg"
     wait = False
-    original_comment = f.exif_get_user_comment(original_file_path, from_filename=copy_tags_from_filename,
-                                               filename=original_file_name)
-    subject_number_with_name = "3144-4 - Aquanet Marlewo"
-    # if copy_tags_from_filename:
-    #     subject_number_with_name = f.get_subject_full_name(original_comment)
-    # else:
-    #     subject_number_with_name = f.exif_get_subject_number_with_name(original_file_path)
-    print(f"Calculating scale for:\n {original_file_path}\n")
+    original_comment = f.exif_get_user_comment(found_jpeg_path, from_filename=copy_tags_from_filename)
+    if copy_tags_from_filename:
+        subject_number_with_name = f.get_subject_full_name(found_jpeg_path.name)
+    else:
+        subject_number_with_name = f.exif_get_subject_number_with_name(found_jpeg_path)
+    print(f"Calculating scale for:\n {found_jpeg_path}\n")
     is_dots_found, original_img, calculated_scale_in_dpmm, suffix_for_calculated_file = image_processing(
-        calculated_file_folder, is_zoom_in, original_file_name, original_file_path, calculated_scale_in_dpmm,
+        calculated_folder_path, is_zoom_in, found_jpeg_path.name, found_jpeg_path, calculated_scale_in_dpmm,
         suffix_for_calculated_file, wait, original_comment)
     # documentation output
-    documentation_img = f.crop_document(original_img, original_file_path)
+    documentation_img = f.crop_document(original_img, found_jpeg_path)
     documentation_info = f.prepare_documentation_info(original_comment, subject_number_with_name)
     if is_dots_found:
         documentation_img = f.draw_rulers_with_labels_outside_the_img(documentation_img, calculated_scale_in_dpmm)
@@ -83,14 +90,14 @@ def calculate_scale(original_file_folder, main_subject_folder, original_file_nam
                                                                           ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS)
             documentation_img = f.draw_documentation_info(documentation_img, documentation_info
                                                           + f" : skala domyslna 1mm = {ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS}px +- 13%")
-    save_image_with_exif_data(calculated_scale_in_dpmm, documentation_file_folder, documentation_img,
-                              original_file_name, original_file_path, suffix_for_calculated_file, original_comment)
-    documentation_output = documentation_file_folder
+    save_image_with_exif_data(calculated_scale_in_dpmm, documentation_folder_path, documentation_img,
+                              found_jpeg_path.name, found_jpeg_path, suffix_for_calculated_file, original_comment)
+    documentation_output = documentation_folder_path
     # ai output
-    ai_img = f.crop_ai(original_img, original_file_path)
-    save_image_with_exif_data(calculated_scale_in_dpmm, ai_file_folder, ai_img,
-                              original_file_name, original_file_path, suffix_for_calculated_file, original_comment)
-    ai_output = ai_file_folder
+    ai_img = f.crop_ai(original_img, found_jpeg_path)
+    save_image_with_exif_data(calculated_scale_in_dpmm, ai_folder_path, ai_img,
+                              found_jpeg_path.name, found_jpeg_path, suffix_for_calculated_file, original_comment)
+    ai_output = ai_folder_path
     return calculated_scale_in_dpmm
 
 
@@ -209,7 +216,7 @@ def sys_end_program(message):
 def request_path_to_find_photos():
     global found_jpegs, user_input_folder
     user_input = sys_get_input("Podej mnie ten ścieżek do zdjęciówek:")
-    path = pathlib.Path(user_input)
+    path = Path(user_input)
     try:
         if path.exists() and len(str(path)) > 0 and not path.is_file() and path.is_dir() and str(path) != ".":
             user_input_folder = str(os.path.abspath(path))
@@ -237,14 +244,14 @@ def find_photos():
 
 
 def proceed_scale_calculation():
-    global current_file_name, current_photo_index, calculated_photos
-    for (file_folder_path, current_file_name) in found_jpegs:
+    global current_photo_index, calculated_photos
+    for found_jpeg in found_jpegs:
         current_photo_index += 1
         print_line()
         print(f"Photo {current_photo_index} of {number_of_photos_to_proceed}...")
-        calculated_scale = calculate_scale(file_folder_path, user_input_folder, current_file_name)
+        calculated_scale = calculate_scale(found_jpeg, user_input_folder)
         if calculated_scale != -1:
-            calculated_photos.append((current_file_name, calculated_scale))
+            calculated_photos.append((found_jpeg, calculated_scale))
     f.close_all_windows()
 
 
@@ -253,7 +260,7 @@ def finish_message():
     print_line()
     print(f"Skala znaleziona w {len(calculated_photos)} z {current_photo_index} przeanalizowanych zdjęć.")
     print(f"Foldery wyjściowe:\n{ai_output}\n{documentation_output}\n{calculated_output}")
-    report_file_path = os.path.join(user_input_folder, "report.txt")
+    report_file_path = os.path.join(user_input_folder, REPORT_FILE_NAME)
     report_file_path = os.path.abspath(report_file_path)
     f.create_report(report_file_path, calculated_photos, current_photo_index, report_message)
     print(f"Raport:\n{report_file_path}")

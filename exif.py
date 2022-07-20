@@ -1,9 +1,9 @@
 import re
 import subprocess
 
-xp_comment = "XPComment"
-user_comment = "UserComment"
-image_description = "ImageDescription"
+XP_COMMENT = "XPComment"
+USER_COMMENT = "UserComment"
+IMAGE_DESCRIPTION = "ImageDescription"
 
 
 def read_tag_value(tag, source_file, print_info=False):
@@ -92,22 +92,23 @@ def copy_all_tags(source_file, destination_file, print_info=False):
         print("exif.copy_all_tags:", out)
 
 
-# def copy_tags_from_filename(destination_file, filename, print_info=False):
-    # comment_tags = prepare_comment_tags(filename, print_info)
-    # args = f"exiftool -overwrite_original" \
-    #        f" -XPComment={comment_tags}" \
-    #        f" -UserComment={comment_tags}" \
-    #        f" {destination_file}"
-    # out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-    #                             universal_newlines=True).communicate()
-    # if print_info:
-    #     print("exif.copy_tags_from_filename:", out)
+def write_comment_tags(destination_file, comment_tags, print_info=False):
+    args = f"exiftool -overwrite_original" \
+           f" -XPComment={comment_tags}" \
+           f" -UserComment={comment_tags}" \
+           f" {destination_file}"
+    out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                universal_newlines=True).communicate()
+    if err is not None:
+        print(err)
+    if print_info:
+        print("exif.copy_tags_from_filename:", out)
 
 
 def set_new_dpmm(dpmm, source_file, print_info=False):
     dpmm_pattern = r"\d+dpmm"
     new_dpmm = f"{dpmm}dpmm"
-    original_tag = read_tag_value(xp_comment, source_file)
+    original_tag = read_tag_value(XP_COMMENT, source_file)
     if is_blank(original_tag):
         dpmm_replaced = new_dpmm
     elif re.search(dpmm_pattern, original_tag):
@@ -118,7 +119,7 @@ def set_new_dpmm(dpmm, source_file, print_info=False):
         dpmm_replaced = ";" + new_dpmm + ";"
     if print_info:
         print("new_dpmm:", dpmm_replaced)
-    write_tag_value(xp_comment, dpmm_replaced, source_file)
+    write_tag_value(XP_COMMENT, dpmm_replaced, source_file)
 
 
 def is_blank(my_string):

@@ -5,6 +5,8 @@ import re
 # venv\Scripts\python.exe -m pip install --upgrade pip
 # venv\Scripts\python.exe -m pip install opencv-python
 # pip install opencv-python
+from pathlib import Path
+
 import cv2
 import imutils
 import numpy as np
@@ -15,6 +17,7 @@ from sys import exit
 
 import exif
 
+JPG_FILE_EXTENSION = ".jpg"
 
 ZOOM_IN = "zoom-in"
 ZOOM_OUT = "zoom-out"
@@ -987,14 +990,19 @@ def write_image_to_file(img, path_to_file):
 
 
 def exif_copy_all_tags(source_file, destination_file):
-        exif.copy_all_tags(source_file, destination_file)
+    exif.copy_all_tags(source_file, destination_file)
 
 
-def exif_get_user_comment(source_file, from_filename=False, filename=""):
+def exif_get_user_comment(source_file: Path, from_filename=False):
     if from_filename:
-        return prepare_comment_tags(filename)
+        return prepare_comment_tags(source_file.name)
     else:
-        return exif.read_tag_value(exif.user_comment, source_file)
+        return exif.read_tag_value(exif.USER_COMMENT, source_file)
+
+
+def exif_write_comment_tags_from_filename(destination_file, filename, print_info=False):
+    comment_tags = prepare_comment_tags(filename, print_info)
+    exif.write_comment_tags(destination_file, comment_tags, print_info)
 
 
 def prepare_comment_tags(filename, print_info=False):
@@ -1008,9 +1016,9 @@ def prepare_comment_tags(filename, print_info=False):
         .replace("3.jpg", "") \
         .replace("4.jpg", "")
     if ZOOM_IN in filename:
-        result = result + "765dpmm;"
+        result = result + f"{ZOOM_IN_MILLIMETER_IN_PIXELS}dpmm;"
     else:
-        result = result + "100dpmm;"
+        result = result + f"{ZOOM_OUT_MILLIMETER_IN_PIXELS}dpmm;"
     if print_info:
         print("exif.preapre_comment_tags input filename:", filename)
         print("exif.preapre_comment_tags tags from filename:", result)
@@ -1018,7 +1026,7 @@ def prepare_comment_tags(filename, print_info=False):
 
 
 def exif_get_subject_number_with_name(source_file):
-    return exif.read_tag_value(exif.image_description, source_file)
+    return exif.read_tag_value(exif.IMAGE_DESCRIPTION, source_file)
 
 
 def exif_update_resolution_tags(path_to_file, scale_in_dpmm, original_comment):
@@ -1032,19 +1040,39 @@ def add_scale_to_file_name(output_samples_path_to_file, calculated_scale_one_mm_
 
 
 def find_all_jpegs(directory, file_name_contains="", show_paths=False):
+    # To get a full path (which begins with top) to a file or directory in
+    # dirpath, do os.path.join(dirpath, name).
     print(f"Skanowanie folderów i podfolderów w poszukiwaniu plików '.jpg' zawierających frazę:"
           f" '{file_name_contains}'\n {directory}\n")
     file_counter = 0
     found_jpegs = []
     for root, dirs, files in os.walk(directory):
+        print("root, dirs, files", root, dirs, files)
         if len(files) > 0:
             for file in files:
-                file_folder_path = root + os.path.sep
-                if str(file).lower().endswith(".jpg") and file_name_contains.lower() in str(file).lower():
-                    found_jpegs.append((file_folder_path, file))
+                # todo compare filename tag with folder ones and show a warning
+                if str(file).lower().endswith(JPG_FILE_EXTENSION) and file_name_contains.lower() in str(file).lower():
+                    full_path = Path(os.path.join(root, file))
+                    # print("wilgotnosc", full_path.parts[-2])
+                    # print("spectrum", full_path.parts[-3])
+                    # print("zoom", full_path.parts[-4])
+                    # print("depth", full_path.parts[-5])
+                    # print("research_point", full_path.parts[-6])
+                    # print("subject_number", full_path.parts[-7]) # get this from file name
+                    # print("full_path", full_path)                                      # full_path      D:\Praca\Geotech\Zdalna_listopad-luty2022\Metadane\339_T\1.5m\zoom-out\UV\WN\3203_339_1.5m_WN_zoom-out_UV_2.jpg
+                    # print("path_to_folder", str(full_path).replace(full_path.name, ""))# path_to_folder D:\Praca\Geotech\Zdalna_listopad-luty2022\Metadane\339_T\1.5m\zoom-out\UV\WN\
+                    # print("parent", full_path.parent)                                  # parent         D:\Praca\Geotech\Zdalna_listopad-luty2022\Metadane\339_T\1.5m\zoom-out\UV\WN
+                    # print("root", full_path.root)                                      # root           \
+                    # print("name", full_path.name)                                      # name           3203_339_1.5m_WN_zoom-out_UV_2.jpg
+                    # print("anchor", full_path.anchor)                                  # anchor         D:\
+                    # print("stem", full_path.stem)                                      # stem           3203_339_1.5m_WN_zoom-out_UV_2
+                    # print("suffix", full_path.suffix)                                  # suffix         .jpg
+                    # print("suffixes", full_path.suffixes)                              # suffixes       ['.5m_WN_zoom-out_UV_2', '.jpg']
+                    # print("drive", full_path.drive)                                    # drive          D:
+                    found_jpegs.append(full_path)
                     file_counter += 1
                     if show_paths:
-                        print(f"{file_counter}. {file_folder_path + file}")
+                        print(f"{file_counter}. {full_path}")
     print(f"Znaleziono: {file_counter} plików.\n")
     return found_jpegs
 
@@ -1109,14 +1137,14 @@ def prepare_documentation_info(original_comment, subject_number_with_name):
 
 
 def exif_rewrite_user_comment(current_file_name, file_folder_path):
-    path_to_file = os.path.join(file_folder_path, current_file_name)
+    path_to_file = Path(file_folder_path, current_file_name)
     user_comment = exif_get_user_comment(path_to_file)
     print("user_comment", user_comment)
-    exif.write_tag_value(exif.user_comment, user_comment.replace("706", "765").replace("760", "765"), path_to_file)
+    exif.write_tag_value(exif.USER_COMMENT, user_comment.replace("706", "765").replace("760", "765"), path_to_file)
 
 
 def exif_write_user_comment(destination_file, comment_tags):
-    exif.write_tag_value(exif.user_comment, comment_tags, destination_file)
+    exif.write_comment_tags(destination_file, comment_tags)
 
 
 def math_abs(number):
@@ -1125,3 +1153,7 @@ def math_abs(number):
 
 def sys_exit():
     exit(0)
+
+
+def get_subject_full_name(original_file_name):
+    return original_file_name.split('_')[0]
