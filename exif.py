@@ -105,6 +105,31 @@ def write_comment_tags(destination_file, comment_tags, print_info=False):
         print("exif.copy_tags_from_filename:", out)
 
 
+def rewrite_retrieved_metadata(destination_file, subject_number_with_name, comment_tags, print_info=False):
+    args = ["exiftool",
+            "-overwrite_original",
+            f"-XPComment={comment_tags}",
+            f"-UserComment={comment_tags}",
+            f"-Artist=Geotech Sp. z o.o.",
+            f"-XPAuthor=Geotech Sp. z o.o.",
+            f"-Copyright=Geotech Sp. z o.o.",
+            f"-Rights=Geotech Sp. z o.o.",
+            f"-Owner=Geotech Sp. z o.o.",
+            f"-Software=GeotechApp",
+            f"-ProcessingSoftware=GeotechApp",
+            f"-Title={subject_number_with_name}",
+            f"-XPTitle={subject_number_with_name}",
+            f"-XPSubject={subject_number_with_name}",
+            f"{destination_file}"
+            ]
+    out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                universal_newlines=True).communicate()
+    if err is not None:
+        print(err)
+    if print_info:
+        print("exif.copy_tags_from_filename:", out)
+
+
 def set_new_dpmm(dpmm, source_file, print_info=False):
     dpmm_pattern = r"\d+dpmm"
     new_dpmm = f"{dpmm}dpmm"
@@ -131,7 +156,7 @@ def is_blank(my_string):
 #                 f" -XPAuthor=Geotech"
 #                 f" -Copyright=Geotech"
 #                 f" -Rights=Geotech"
-#                 f" -Owner=Geotech"
+#                 f" -Owner=Geotech Sp. z o.o."
 #
 #                 f" -Software=GeotechApp"
 #                 f" -ProcessingSoftware=PythonOpenCV"

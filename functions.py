@@ -1027,12 +1027,12 @@ def prepare_comment_tags_from_path(path: Path, print_info=False):
     # output tags example: 3144-4;M1-2-p;0.4m;WN;zoom-in;NAT;765dpmm;
     # output tags example: 3144-4;M1-2-p;0.4m;WN;zoom-out;NAT;1000dpmm;
     # original output tags example: 000;o1;2.0m;WN;zoom-in;NAT;760dpmm;
-    subject_number = path.name.split("_")[0]
-    research_point = path.parts[-6]
-    depth = path.parts[-5]
-    wn = path.parts[-2]
-    zoom = path.parts[-4]
-    spectrum = path.parts[-3]
+    subject_number = retrieve_subject_number(path)
+    research_point = retrieve_research_point_name(path)
+    depth = retrieve_depth(path)
+    wn = retrieve_humidity(path)
+    zoom = retrieve_zoom(path)
+    spectrum = retrieve_spectrum(path)
     if ZOOM_IN in str(path):
         scale_dpmm = f"{ZOOM_IN_MILLIMETER_IN_PIXELS}dpmm"
     else:
@@ -1043,6 +1043,30 @@ def prepare_comment_tags_from_path(path: Path, print_info=False):
         print("exif.preapre_comment_tags input filename:", path)
         print("exif.preapre_comment_tags tags from filename:", result)
     return result
+
+
+def retrieve_subject_number(path: Path):
+    return path.name.split("_")[0]
+
+
+def retrieve_research_point_name(path: Path):
+    return path.parts[-6]
+
+
+def retrieve_depth(path: Path):
+    return path.parts[-5]
+
+
+def retrieve_humidity(path: Path):
+    return path.parts[-2]
+
+
+def retrieve_zoom(path: Path):
+    return path.parts[-4]
+
+
+def retrieve_spectrum(path: Path):
+    return path.parts[-3]
 
 
 def exif_get_subject_number_with_name(source_file):
@@ -1161,6 +1185,15 @@ def exif_rewrite_user_comment(current_file_name, file_folder_path):
     user_comment = exif_get_user_comment(path_to_file)
     print("user_comment", user_comment)
     exif.write_tag_value(exif.USER_COMMENT, user_comment.replace("706", "765").replace("760", "765"), path_to_file)
+
+
+def exif_rewrite_all_exif_metadata(found_jpeg_path, original_comment, subject_number_with_name):
+    exif.rewrite_retrieved_metadata(
+        found_jpeg_path,
+        subject_number_with_name,
+        original_comment
+    )
+    # exif.write_tag_value(exif.USER_COMMENT, user_comment.replace("706", "765").replace("760", "765"), path_to_file)
 
 
 def exif_write_user_comment(destination_file, comment_tags):
