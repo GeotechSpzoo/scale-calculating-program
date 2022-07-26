@@ -55,14 +55,27 @@ is_exif_comment_tags_empty = False
 is_copy_exif_subject_number_with_name_empty = False
 
 # User selection
-is_override_original_photo_metadata_enabled = True
-is_override_subject_number_with_name_enabled = True
-is_retrieve_metadata_if_possible_enabled = True
-subject_number_with_name_to_override = "override_subject_number_with_name"
+is_override_original_photo_metadata_enabled = False
+is_override_subject_number_with_name_enabled = False
+is_retrieve_metadata_if_possible_enabled = False
+is_scale_calculation_enabled = True
+is_ai_output_enabled = True
+is_documentation_output_enabled = True
+# C:\Users\pawel.drelich\Desktop\AUTOMATYCZNE_ZESTAWIANIE_ZDJEC\dlaKonrada\zdjecia1
+# subject_number_with_name_to_override = "3144 - Aquanet Marlewo"
+# C:\Users\pawel.drelich\Desktop\AUTOMATYCZNE_ZESTAWIANIE_ZDJEC\dlaKonrada\zdjecia2
+# subject_number_with_name_to_override = "3203 - DK16 Giby-Ogrodniki"
+# C:\Users\pawel.drelich\Desktop\AUTOMATYCZNE_ZESTAWIANIE_ZDJEC\dlaKonrada\zdjecia3
+subject_number_with_name_to_override = "3202 DK 16 Gleboki Brod - Giby"
+
+
+# C:\Users\pawel.drelich\Desktop\AUTOMATYCZNE_ZESTAWIANIE_ZDJEC\dlaKonrada\zdjecia2\109_NAW\5.0m\zoom-in\NAT\WN\
+# Warning: FileName encoding not specified
 
 
 def calculate_scale(found_jpeg_path: Path, main_subject_folder):
     global ai_output, documentation_output, is_exif_comment_tags_empty, is_copy_exif_subject_number_with_name_empty
+    print(f"Processing:\n {found_jpeg_path}\n")
     is_zoom_in = f.ZOOM_IN in str(found_jpeg_path)
     calculated_scale_in_dpmm = SCALE_NOT_CALCULATED
     ai_folder_path = Path(main_subject_folder + AI_FOLDER_SUFFIX)
@@ -70,12 +83,28 @@ def calculate_scale(found_jpeg_path: Path, main_subject_folder):
     calculated_folder_path = Path(main_subject_folder + CALCULATED_FOLDER_SUFFIX)
     suffix_for_calculated_file = ".jpg"
     original_comment, subject_number_with_name = get_metadata(found_jpeg_path)
-    if is_override_original_photo_metadata_enabled:
+    if is_override_original_photo_metadata_enabled and is_exif_comment_tags_empty and is_copy_exif_subject_number_with_name_empty:
         f.exif_rewrite_all_exif_metadata(found_jpeg_path, original_comment, subject_number_with_name)
-    print(f"Calculating scale for:\n {found_jpeg_path}\n")
-    is_dots_found, original_img, calculated_scale_in_dpmm, suffix_for_calculated_file = process_image(
-        calculated_folder_path, is_zoom_in, found_jpeg_path.name, found_jpeg_path, calculated_scale_in_dpmm,
-        suffix_for_calculated_file, WAIT, original_comment)
+    else:
+        print(f"Metadata already exist:\nsubject={subject_number_with_name}\ntags={original_comment}")
+    if is_scale_calculation_enabled:
+        is_dots_found, original_img, calculated_scale_in_dpmm, suffix_for_calculated_file = proceed_scale_calculation(
+            calculated_folder_path, is_zoom_in, found_jpeg_path.name, found_jpeg_path, calculated_scale_in_dpmm,
+            suffix_for_calculated_file, WAIT, original_comment)
+    if is_documentation_output_enabled:
+        proceed_documentation_output(calculated_scale_in_dpmm, documentation_folder_path, found_jpeg_path,
+                                     is_zoom_in, original_comment, original_img, subject_number_with_name,
+                                     suffix_for_calculated_file, is_dots_found)
+    if is_ai_output_enabled:
+        proceed_ai_ouput(ai_folder_path, calculated_scale_in_dpmm, found_jpeg_path, original_comment, original_img,
+                         suffix_for_calculated_file)
+    return calculated_scale_in_dpmm
+
+
+def proceed_documentation_output(calculated_scale_in_dpmm, documentation_folder_path, found_jpeg_path,
+                                 is_zoom_in, original_comment, original_img, subject_number_with_name,
+                                 suffix_for_calculated_file, is_dots_found=False):
+    global documentation_output
     # documentation output
     documentation_img = f.crop_document(original_img, found_jpeg_path)
     documentation_info = f.prepare_documentation_info(original_comment, subject_number_with_name)
@@ -100,18 +129,24 @@ def calculate_scale(found_jpeg_path: Path, main_subject_folder):
     save_image_with_exif_data(calculated_scale_in_dpmm, documentation_folder_path, documentation_img,
                               found_jpeg_path.name, found_jpeg_path, suffix_for_calculated_file, original_comment)
     documentation_output = documentation_folder_path
+
+
+def proceed_ai_ouput(ai_folder_path, calculated_scale_in_dpmm, found_jpeg_path, original_comment, original_img,
+                     suffix_for_calculated_file):
+    global ai_output
     # ai output
     ai_img = f.crop_ai(original_img, found_jpeg_path)
     save_image_with_exif_data(calculated_scale_in_dpmm, ai_folder_path, ai_img,
                               found_jpeg_path.name, found_jpeg_path, suffix_for_calculated_file, original_comment)
     ai_output = ai_folder_path
-    return calculated_scale_in_dpmm
 
 
 def get_metadata(found_jpeg_path):
     global is_exif_comment_tags_empty, is_copy_exif_subject_number_with_name_empty
     original_comment = f.exif_get_user_comment(found_jpeg_path)
     subject_number_with_name = f.exif_get_subject_number_with_name(found_jpeg_path)
+    # original_comment = ""
+    # subject_number_with_name = ""
     if is_retrieve_metadata_if_possible_enabled:
         if original_comment == "" or not original_comment:
             # f.prepare_comment_tags_from_filename(source_file.name)
@@ -138,8 +173,8 @@ def prepare_documentation_legend_info_text_zoom_out(documentation_info):
     return documentation_info + f" : skala domyslna 1mm = {ZOOM_OUT_DEFAULT_SCALE_IN_PIXELS}px +- 13%"
 
 
-def process_image(calculated_file_folder, is_zoom_in, original_file_name, original_file_path,
-                  scale_calculated_one_mm_in_px, suffix_for_calculated_file, wait, original_comment):
+def proceed_scale_calculation(calculated_file_folder, is_zoom_in, original_file_name, original_file_path,
+                              scale_calculated_one_mm_in_px, suffix_for_calculated_file, wait, original_comment):
     original_img = f.load_image(original_file_path)
     original_img_dots = f.crop_dots(original_img, original_file_path)
     img_gray = f.bgr_to_custom_gray(original_img_dots)
@@ -192,9 +227,6 @@ def save_image_with_exif_data(scale_calculated_one_mm_in_px,
     file_path = os.path.join(file_folder, original_file_name.replace(".jpg", suffix_for_calculated_file))
     f.save_photo(img, file_folder, file_path, override=True)
     f.exif_copy_all_tags(original_file_path, file_path)
-    # todo optimize for one-time exiftool call
-    if is_exif_comment_tags_empty:
-        f.exif_write_user_comment(file_path, original_comment)
     f.exif_update_resolution_tags(file_path, scale_calculated_one_mm_in_px, original_comment)
 
 
@@ -251,27 +283,35 @@ def sys_end_program(message):
     f.sys_exit()
 
 
+def verify_path_for_exiftool(path):
+    sample = f.exif_get_user_comment(path)
+    return "Warning: FileName encoding not specified" not in sample
+
+
 def request_path_to_find_photos():
     global found_jpegs, user_input_folder
     user_input = sys_get_input("Podej mnie ten ścieżek do zdjęciówek:")
     path = Path(user_input)
     try:
         if path.exists() and len(str(path)) > 0 and not path.is_file() and path.is_dir() and str(path) != ".":
-            user_input_folder = str(os.path.abspath(path))
-            phrase_to_include_in_file_name = sys_get_input(
-                "Podej mnie ten frazes, który powinin zawierać się w nazwie plyku,"
-                " abo walnij ENTERem aby nie flirtować plików:")
-            found_jpegs = f.find_all_jpegs(user_input_folder, phrase_to_include_in_file_name)
-            if found_jpegs is None:
-                return 0
+            is_path_verified = verify_path_for_exiftool(path)
+            if is_path_verified:
+                user_input_folder = str(os.path.abspath(path))
+                phrase_to_include_in_file_name = sys_get_input(
+                    "Podej mnie ten frazes, który powinin zawierać się w nazwie plyku,"
+                    " abo walnij ENTERem aby nie flirtować plików:")
+                found_jpegs = f.find_all_jpegs(user_input_folder, phrase_to_include_in_file_name)
+                if found_jpegs is None:
+                    return 0
+                else:
+                    return len(found_jpegs)
             else:
-                return len(found_jpegs)
+                print("Podana ścieżka posiada niedozwolone znaki, np. polskie litery. Usuń je!")
         else:
-            print("Podana ścieżka jest nieprawidłowa.")
-            return -1
+            print("Podana ścieżka jest nieprawidłowa. Sprawdź czy nie ma w niej np. spacji lub polskich liter.")
     except Exception:
         print("Podana ścieżka jest nieprawidłowa.")
-        return -1
+    return -1
 
 
 def find_photos():
@@ -281,7 +321,7 @@ def find_photos():
     return i
 
 
-def proceed_scale_calculation():
+def start_scale_calculation():
     global current_photo_index, calculated_photos
     for found_jpeg in found_jpegs:
         current_photo_index += 1
@@ -314,7 +354,7 @@ def sys_start_program():
     if number_of_photos_to_proceed > 0:
         sys_get_input("Naciśnij ENTER aby rozpocząć kalkulację skali zdjęć lub wpisz 'q' aby anulować...")
         print("Rozpoczęto analizę zdjęć...")
-        proceed_scale_calculation()
+        start_scale_calculation()
         print_line()
         print("Zakończono analizę zdjęć.")
     else:

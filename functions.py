@@ -1,11 +1,11 @@
 import os
-import sys
 import re
-
+import sys
 # venv\Scripts\python.exe -m pip install --upgrade pip
 # venv\Scripts\python.exe -m pip install opencv-python
 # pip install opencv-python
 from pathlib import Path
+from sys import exit
 
 import cv2
 import imutils
@@ -13,9 +13,46 @@ import numpy as np
 from imutils import contours as cont
 from imutils import perspective
 from scipy.spatial import distance as dist
-from sys import exit
 
 import exif
+
+zii = "ź"
+
+zi = "ż"
+
+si = "ś"
+
+oi = "ó"
+
+ni = "ń"
+
+li = "ł"
+
+ei = "ę"
+
+ci = "ć"
+
+ai = "ą"
+
+Zii = "Ź"
+
+Zi = "Ż"
+
+Si = "Ś"
+
+Oi = "Ó"
+
+Ni = "Ń"
+
+Li = "Ł"
+
+Ei = "Ę"
+
+Ci = "Ć"
+
+Ai = "Ą"
+
+CHARS_NOT_ALLOWED = [ai, ci, ei, li, ni, oi, si, zi, zii, Ai, Ci, Ei, Li, Ni, Oi, Si, Zi, Zii]
 
 JPG_FILE_EXTENSION = ".jpg"
 
@@ -1140,15 +1177,15 @@ def remove_non_ascii_chars(text):
 
 
 def replace_polish_chars(text):
-    result = text.replace("Ą", "A").replace("ą", "a") \
-        .replace("Ć", "C").replace("ć", "c") \
-        .replace("Ę", "E").replace("ę", "e") \
-        .replace("Ł", "L").replace("ł", "l") \
-        .replace("Ń", "N").replace("ń", "n") \
-        .replace("Ó", "O").replace("ó", "o") \
-        .replace("Ś", "S").replace("ś", "s") \
-        .replace("Ż", "Z").replace("ż", "z") \
-        .replace("Ź", "Z").replace("ź", "z")
+    result = text.replace(Ai, "A").replace(ai, "a") \
+        .replace(Ci, "C").replace(ci, "c") \
+        .replace(Ei, "E").replace(ei, "e") \
+        .replace(Li, "L").replace(li, "l") \
+        .replace(Ni, "N").replace(ni, "n") \
+        .replace(Oi, "O").replace(oi, "o") \
+        .replace(Si, "S").replace(si, "s") \
+        .replace(Zi, "Z").replace(zi, "z") \
+        .replace(Zii, "Z").replace(zii, "z")
     return result
 
 
@@ -1188,11 +1225,13 @@ def exif_rewrite_user_comment(current_file_name, file_folder_path):
 
 
 def exif_rewrite_all_exif_metadata(found_jpeg_path, original_comment, subject_number_with_name):
+    print(f"Retrieving metadata...")
     exif.rewrite_retrieved_metadata(
         found_jpeg_path,
         subject_number_with_name,
         original_comment
     )
+    print(f"Retrieved metadata:\nsubject={subject_number_with_name}\ntags={original_comment}")
     # exif.write_tag_value(exif.USER_COMMENT, user_comment.replace("706", "765").replace("760", "765"), path_to_file)
 
 
