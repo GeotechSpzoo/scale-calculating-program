@@ -7,7 +7,7 @@ import functions as f
 GIVE_ME_A_PATH_MESSAGE = "Podaj ścieżkę do folderu ze zdjęciami. W ścieżce nie może być polskich znaków ani spacji!:"
 
 GIVE_ME_A_SEARCH_FRAGMENT = "Podaj frazę która ma się znajdować w nazwie pliku (np. numer otworu) aby przefiltrować zdjęcia," \
-                           " lub naciśnij ENTER aby nie filtrować zdjęć:"
+                            " lub naciśnij ENTER aby nie filtrować zdjęć:"
 
 SCALE_NOT_CALCULATED = -1
 
@@ -305,25 +305,22 @@ def request_path_to_find_photos():
     global found_jpegs, user_input_folder
     user_input = sys_get_input(GIVE_ME_A_PATH_MESSAGE)
     path = Path(user_input)
-    try:
-        if path.exists() and len(str(path)) > 0 and str(path) != ".":
-            if not path.is_file() and path.is_dir():
-                is_path_verified = verify_path_for_exiftool(path)
-                if is_path_verified:
-                    user_input_folder = str(os.path.abspath(path))
-                    phrase_to_include_in_file_name = sys_get_input(GIVE_ME_A_SEARCH_FRAGMENT)
-                    found_jpegs = f.find_all_jpegs(user_input_folder, phrase_to_include_in_file_name)
-                    if found_jpegs is None:
-                        return 0
-                    else:
-                        return len(found_jpegs)
+    if path.exists() and len(str(path)) > 0 and str(path) != ".":
+        if not path.is_file() and path.is_dir():
+            is_path_verified = verify_path_for_exiftool(path)
+            if is_path_verified:
+                user_input_folder = str(os.path.abspath(path))
+                phrase_to_include_in_file_name = sys_get_input(GIVE_ME_A_SEARCH_FRAGMENT)
+                found_jpegs = f.find_all_jpegs(user_input_folder, phrase_to_include_in_file_name)
+                if found_jpegs is None:
+                    return 0
                 else:
-                    print("Podana ścieżka posiada niedozwolone znaki, np. polskie litery. Usuń je!")
+                    return len(found_jpegs)
             else:
-                print("Podana ścieżka to nie folder!")
+                print("Podana ścieżka posiada niedozwolone znaki, np. polskie litery. Usuń je!")
         else:
-            print("Podana ścieżka jest nieprawidłowa.")
-    except Exception:
+            print("Podana ścieżka to nie folder!")
+    else:
         print("Podana ścieżka jest nieprawidłowa.")
     return -1
 
@@ -393,21 +390,18 @@ except (Exception, KeyboardInterrupt, OSError) as e:
         print_line()
         print(e)
     else:
-        report_message = f"Przerwano działanie programu z powodu: {e}"
-        print_line()
-        if len(str(e)) == 0:
-            report_message = "Wciśnięto CTRL + C lub przerwano działanie programu z nieznanego powodu."
-            e = report_message
-        elif "WinError 2" in str(e) and "'" not in str(e):
-            report_message = f"Prawdopodobnie brakuje pliku 'exiftool.exe'. Przerwano działanie programu: {e}"
-            print("\tPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania programu.")
-            print("\tŚciągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.")
-        print(f"\nERROR:\n{e}\n")
+        report_message = f"Przerwano działanie programu z powodu:\n{e}"
         print_line()
         traceback = traceback.format_exc()
-        report_message = f"{report_message}\n{traceback}"
         print(traceback)
+        if len(str(e)) == 0:
+            report_message = f"{report_message}\nWciśnięto CTRL + C lub przerwano działanie programu z nieznanego powodu."
+        elif "WinError 2" in str(e) and "'" not in str(e):
+            report_message = f"{report_message}\n\nPrawdopodobnie brakuje pliku 'exiftool.exe'. Jest on niezbędny do działania programu.\n" \
+                             f"Ściągnij go ze strony: https://exiftool.org/ i umieść w katalogu programu.\n"
         print_line()
+        print(f"\nERROR:\n\n{report_message}")
+        report_message = f"{report_message}\n{traceback}"
         print("Złapano wyjątek. Program został zatrzymany.")
 finally:
     sys_end_program("Koniec programu...")
