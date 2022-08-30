@@ -8,6 +8,7 @@ TITLE = "Title"
 XP_TITLE = "XPTitle"
 XP_SUBJECT = "XPSubject"
 
+
 def read_tag_value(tag, source_file, print_info=False):
     args = ["exiftool", "-s", "-s", "-s", f"-{tag}", f"{source_file}"]
     out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,

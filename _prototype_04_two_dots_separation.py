@@ -4,9 +4,9 @@ import traceback
 
 import functions as f
 
-GIVE_ME_A_PATH_MESSAGE = "Podaj ścieżkę do zdjęć (NIE MOŻE ZAWIERAĆ POLSKICH ZNAKÓW ANI SPACJI !!!):"
+GIVE_ME_A_PATH_MESSAGE = "Podaj ścieżkę do folderu ze zdjęciami. W ścieżce nie może być polskich znaków ani spacji!:"
 
-GIVE_ME_A_SEARCH_FRAGMENT = "Podaj fragment nazwy (np. numer otworu) jaki ma się znajdować w nazwie pliku aby przefiltrować zdjęcia," \
+GIVE_ME_A_SEARCH_FRAGMENT = "Podaj frazę która ma się znajdować w nazwie pliku (np. numer otworu) aby przefiltrować zdjęcia," \
                            " lub naciśnij ENTER aby nie filtrować zdjęć:"
 
 SCALE_NOT_CALCULATED = -1
@@ -155,9 +155,9 @@ def proceed_ai_ouput(ai_folder_path, calculated_scale_in_dpmm, found_jpeg_path, 
 def get_metadata(found_jpeg_path):
     global is_exif_comment_tags_empty, is_exif_subject_number_with_name_empty
     original_comment = f.exif_get_user_comment(found_jpeg_path)
-    print(f"original_comment={original_comment}")
+    # print(f"original_comment={original_comment}")
     subject_number_with_name = f.exif_get_subject_number_with_name(found_jpeg_path)
-    print(f"subject_number_with_name={subject_number_with_name}")
+    # print(f"subject_number_with_name={subject_number_with_name}")
     # original_comment = ""
     # subject_number_with_name = ""
     if is_retrieve_metadata_if_possible_enabled:
@@ -306,20 +306,23 @@ def request_path_to_find_photos():
     user_input = sys_get_input(GIVE_ME_A_PATH_MESSAGE)
     path = Path(user_input)
     try:
-        if path.exists() and len(str(path)) > 0 and not path.is_file() and path.is_dir() and str(path) != ".":
-            is_path_verified = verify_path_for_exiftool(path)
-            if is_path_verified:
-                user_input_folder = str(os.path.abspath(path))
-                phrase_to_include_in_file_name = sys_get_input(GIVE_ME_A_SEARCH_FRAGMENT)
-                found_jpegs = f.find_all_jpegs(user_input_folder, phrase_to_include_in_file_name)
-                if found_jpegs is None:
-                    return 0
+        if path.exists() and len(str(path)) > 0 and str(path) != ".":
+            if not path.is_file() and path.is_dir():
+                is_path_verified = verify_path_for_exiftool(path)
+                if is_path_verified:
+                    user_input_folder = str(os.path.abspath(path))
+                    phrase_to_include_in_file_name = sys_get_input(GIVE_ME_A_SEARCH_FRAGMENT)
+                    found_jpegs = f.find_all_jpegs(user_input_folder, phrase_to_include_in_file_name)
+                    if found_jpegs is None:
+                        return 0
+                    else:
+                        return len(found_jpegs)
                 else:
-                    return len(found_jpegs)
+                    print("Podana ścieżka posiada niedozwolone znaki, np. polskie litery. Usuń je!")
             else:
-                print("Podana ścieżka posiada niedozwolone znaki, np. polskie litery. Usuń je!")
+                print("Podana ścieżka to nie folder!")
         else:
-            print("Podana ścieżka jest nieprawidłowa. Sprawdź czy nie ma w niej np. spacji lub polskich liter.")
+            print("Podana ścieżka jest nieprawidłowa.")
     except Exception:
         print("Podana ścieżka jest nieprawidłowa.")
     return -1
