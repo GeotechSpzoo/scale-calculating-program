@@ -52,12 +52,13 @@ user_abort_message = "Program przerwany po wpisaniu 'q' przez użytkownika."
 
 WAIT = False
 is_exif_comment_tags_empty = False
-is_copy_exif_subject_number_with_name_empty = False
+is_exif_subject_number_with_name_empty = False
 
 # User selection
-is_override_original_photo_metadata_enabled = False
+is_override_original_photo_metadata_enabled = True
+is_override_existing_output_files_enabled = True
 is_override_subject_number_with_name_enabled = False
-is_retrieve_metadata_if_possible_enabled = False
+is_retrieve_metadata_if_possible_enabled = True
 is_scale_calculation_enabled = True
 is_ai_output_enabled = True
 is_documentation_output_enabled = True
@@ -74,7 +75,7 @@ subject_number_with_name_to_override = "3202 DK 16 Gleboki Brod - Giby"
 
 
 def calculate_scale(found_jpeg_path: Path, main_subject_folder):
-    global ai_output, documentation_output, is_exif_comment_tags_empty, is_copy_exif_subject_number_with_name_empty
+    global ai_output, documentation_output, is_exif_comment_tags_empty, is_exif_subject_number_with_name_empty
     print(f"Processing:\n {found_jpeg_path}\n")
     is_zoom_in = f.ZOOM_IN in str(found_jpeg_path)
     calculated_scale_in_dpmm = SCALE_NOT_CALCULATED
@@ -83,21 +84,26 @@ def calculate_scale(found_jpeg_path: Path, main_subject_folder):
     calculated_folder_path = Path(main_subject_folder + CALCULATED_FOLDER_SUFFIX)
     suffix_for_calculated_file = ".jpg"
     original_comment, subject_number_with_name = get_metadata(found_jpeg_path)
-    if is_override_original_photo_metadata_enabled and is_exif_comment_tags_empty and is_copy_exif_subject_number_with_name_empty:
-        f.exif_rewrite_all_exif_metadata(found_jpeg_path, original_comment, subject_number_with_name)
-    else:
-        print(f"Metadata already exist:\nsubject={subject_number_with_name}\ntags={original_comment}")
+    if is_retrieve_metadata_if_possible_enabled:
+        if is_exif_comment_tags_empty or is_exif_subject_number_with_name_empty:
+            print(f"Retrieving metadata...")
+            f.exif_rewrite_all_exif_metadata(found_jpeg_path, original_comment, subject_number_with_name)
+            print(f"Metadata retrieved: subject={subject_number_with_name}, tags={original_comment}")
+        else:
+            pass  # print(f"Metadata exist: subject={subject_number_with_name}, tags={original_comment}")
     if is_scale_calculation_enabled:
         is_dots_found, original_img, calculated_scale_in_dpmm, suffix_for_calculated_file = proceed_scale_calculation(
             calculated_folder_path, is_zoom_in, found_jpeg_path.name, found_jpeg_path, calculated_scale_in_dpmm,
             suffix_for_calculated_file, WAIT, original_comment)
-    if is_documentation_output_enabled:
-        proceed_documentation_output(calculated_scale_in_dpmm, documentation_folder_path, found_jpeg_path,
-                                     is_zoom_in, original_comment, original_img, subject_number_with_name,
-                                     suffix_for_calculated_file, is_dots_found)
-    if is_ai_output_enabled:
-        proceed_ai_ouput(ai_folder_path, calculated_scale_in_dpmm, found_jpeg_path, original_comment, original_img,
-                         suffix_for_calculated_file)
+        if is_documentation_output_enabled:
+            proceed_documentation_output(calculated_scale_in_dpmm, documentation_folder_path, found_jpeg_path,
+                                         is_zoom_in, original_comment, original_img, subject_number_with_name,
+                                         suffix_for_calculated_file, is_dots_found)
+        if is_ai_output_enabled:
+            proceed_ai_ouput(ai_folder_path, calculated_scale_in_dpmm, found_jpeg_path, original_comment, original_img,
+                             suffix_for_calculated_file)
+    is_exif_comment_tags_empty = False
+    is_exif_subject_number_with_name_empty = False
     return calculated_scale_in_dpmm
 
 
@@ -142,9 +148,11 @@ def proceed_ai_ouput(ai_folder_path, calculated_scale_in_dpmm, found_jpeg_path, 
 
 
 def get_metadata(found_jpeg_path):
-    global is_exif_comment_tags_empty, is_copy_exif_subject_number_with_name_empty
+    global is_exif_comment_tags_empty, is_exif_subject_number_with_name_empty
     original_comment = f.exif_get_user_comment(found_jpeg_path)
+    print(f"original_comment={original_comment}")
     subject_number_with_name = f.exif_get_subject_number_with_name(found_jpeg_path)
+    print(f"subject_number_with_name={subject_number_with_name}")
     # original_comment = ""
     # subject_number_with_name = ""
     if is_retrieve_metadata_if_possible_enabled:
@@ -153,7 +161,7 @@ def get_metadata(found_jpeg_path):
             is_exif_comment_tags_empty = True
             original_comment = f.prepare_comment_tags_from_path(found_jpeg_path)
         if subject_number_with_name == "" or not subject_number_with_name:
-            is_copy_exif_subject_number_with_name_empty = True
+            is_exif_subject_number_with_name_empty = True
             if is_override_subject_number_with_name_enabled:
                 subject_number_with_name = subject_number_with_name_to_override
             else:
@@ -225,7 +233,7 @@ def save_image_with_exif_data(scale_calculated_one_mm_in_px,
                               suffix_for_calculated_file,
                               original_comment):
     file_path = os.path.join(file_folder, original_file_name.replace(".jpg", suffix_for_calculated_file))
-    f.save_photo(img, file_folder, file_path, override=True)
+    f.save_photo(img, file_folder, file_path, override=is_override_existing_output_files_enabled)
     f.exif_copy_all_tags(original_file_path, file_path)
     f.exif_update_resolution_tags(file_path, scale_calculated_one_mm_in_px, original_comment)
 

@@ -1031,7 +1031,14 @@ def exif_copy_all_tags(source_file, destination_file):
 
 
 def exif_get_user_comment(source_file: Path):
-    return exif.read_tag_value(exif.USER_COMMENT, source_file)
+    tags_to_search = [exif.XP_COMMENT, exif.USER_COMMENT]
+    user_comment = ""
+    for tag in tags_to_search:
+        if user_comment == "" or not user_comment:
+            user_comment = exif.read_tag_value(tag, source_file)
+        else:
+            break
+    return user_comment
 
 
 def exif_write_comment_tags_from_filename(destination_file, filename, print_info=False):
@@ -1107,7 +1114,14 @@ def retrieve_spectrum(path: Path):
 
 
 def exif_get_subject_number_with_name(source_file):
-    return exif.read_tag_value(exif.IMAGE_DESCRIPTION, source_file)
+    tags_to_search = [exif.TITLE, exif.IMAGE_DESCRIPTION, exif.XP_TITLE, exif.XP_SUBJECT]
+    subject_name_with_number = ""
+    for tag in tags_to_search:
+        if subject_name_with_number == "" or not subject_name_with_number:
+            subject_name_with_number = exif.read_tag_value(tag, source_file)
+        else:
+            break
+    return subject_name_with_number
 
 
 def exif_update_resolution_tags(path_to_file, scale_in_dpmm, original_comment):
@@ -1128,7 +1142,7 @@ def find_all_jpegs(directory, file_name_contains="", show_paths=False):
     file_counter = 0
     found_jpegs = []
     for root, dirs, files in os.walk(directory):
-        print("root, dirs, files", root, dirs, files)
+        # print("root, dirs, files", root, dirs, files)
         if len(files) > 0:
             for file in files:
                 # todo compare filename tag with folder ones and show a warning
@@ -1217,21 +1231,20 @@ def prepare_documentation_info(original_comment, subject_number_with_name):
     return result_text
 
 
-def exif_rewrite_user_comment(current_file_name, file_folder_path):
-    path_to_file = Path(file_folder_path, current_file_name)
-    user_comment = exif_get_user_comment(path_to_file)
-    print("user_comment", user_comment)
-    exif.write_tag_value(exif.USER_COMMENT, user_comment.replace("706", "765").replace("760", "765"), path_to_file)
+def exif_rewrite_comment_tags(found_jpeg_path, original_comment):
+    exif.rewrite_comment_tags(found_jpeg_path, original_comment)
+
+
+def exif_rewrite_subject_number_with_name(found_jpeg_path, subject_number_with_name):
+    exif.rewrite_subject_number_with_name(found_jpeg_path, subject_number_with_name)
 
 
 def exif_rewrite_all_exif_metadata(found_jpeg_path, original_comment, subject_number_with_name):
-    print(f"Retrieving metadata...")
     exif.rewrite_retrieved_metadata(
         found_jpeg_path,
         subject_number_with_name,
         original_comment
     )
-    print(f"Retrieved metadata:\nsubject={subject_number_with_name}\ntags={original_comment}")
     # exif.write_tag_value(exif.USER_COMMENT, user_comment.replace("706", "765").replace("760", "765"), path_to_file)
 
 

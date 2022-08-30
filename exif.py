@@ -4,7 +4,9 @@ import subprocess
 XP_COMMENT = "XPComment"
 USER_COMMENT = "UserComment"
 IMAGE_DESCRIPTION = "ImageDescription"
-
+TITLE = "Title"
+XP_TITLE = "XPTitle"
+XP_SUBJECT = "XPSubject"
 
 def read_tag_value(tag, source_file, print_info=False):
     args = ["exiftool", "-s", "-s", "-s", f"-{tag}", f"{source_file}"]
@@ -128,6 +130,44 @@ def rewrite_retrieved_metadata(destination_file, subject_number_with_name, comme
         print(err)
     if print_info:
         print("exif.copy_tags_from_filename:", out)
+
+
+def rewrite_subject_number_with_name(found_jpeg_path, subject_number_with_name, print_info=False):
+    args = ["exiftool",
+            "-overwrite_original",
+            f"-Title={subject_number_with_name}",
+            f"-XPTitle={subject_number_with_name}",
+            f"-XPSubject={subject_number_with_name}",
+            f"{found_jpeg_path}"
+            ]
+    out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                universal_newlines=True).communicate()
+    if err is not None:
+        print(err)
+    if print_info:
+        print("exif.rewrite_subject_number_with_name:", out)
+
+
+def rewrite_comment_tags(destination_file, comment_tags, print_info=False):
+    args = ["exiftool",
+            "-overwrite_original",
+            f"-XPComment={comment_tags}",
+            f"-UserComment={comment_tags}",
+            f"-Artist=Geotech Sp. z o.o.",
+            f"-XPAuthor=Geotech Sp. z o.o.",
+            f"-Copyright=Geotech Sp. z o.o.",
+            f"-Rights=Geotech Sp. z o.o.",
+            f"-Owner=Geotech Sp. z o.o.",
+            f"-Software=GeotechApp",
+            f"-ProcessingSoftware=GeotechApp",
+            f"{destination_file}"
+            ]
+    out, err = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                universal_newlines=True).communicate()
+    if err is not None:
+        print(err)
+    if print_info:
+        print("exif.rewrite_comment_tags:", out)
 
 
 def set_new_dpmm(dpmm, source_file, print_info=False):
