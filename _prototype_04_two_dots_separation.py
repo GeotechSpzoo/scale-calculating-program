@@ -4,6 +4,11 @@ import traceback
 
 import functions as f
 
+GIVE_ME_A_PATH_MESSAGE = "Podaj ścieżkę do zdjęć (NIE MOŻE ZAWIERAĆ POLSKICH ZNAKÓW ANI SPACJI !!!):"
+
+GIVE_ME_A_SEARCH_FRAGMENT = "Podaj fragment nazwy (np. numer otworu) jaki ma się znajdować w nazwie pliku aby przefiltrować zdjęcia," \
+                           " lub naciśnij ENTER aby nie filtrować zdjęć:"
+
 SCALE_NOT_CALCULATED = -1
 
 CALCULATED_FOLDER_SUFFIX = "_calculated"
@@ -298,16 +303,14 @@ def verify_path_for_exiftool(path):
 
 def request_path_to_find_photos():
     global found_jpegs, user_input_folder
-    user_input = sys_get_input("Podej mnie ten ścieżek do zdjęciówek:")
+    user_input = sys_get_input(GIVE_ME_A_PATH_MESSAGE)
     path = Path(user_input)
     try:
         if path.exists() and len(str(path)) > 0 and not path.is_file() and path.is_dir() and str(path) != ".":
             is_path_verified = verify_path_for_exiftool(path)
             if is_path_verified:
                 user_input_folder = str(os.path.abspath(path))
-                phrase_to_include_in_file_name = sys_get_input(
-                    "Podej mnie ten frazes, który powinin zawierać się w nazwie plyku,"
-                    " abo walnij ENTERem aby nie flirtować plików:")
+                phrase_to_include_in_file_name = sys_get_input(GIVE_ME_A_SEARCH_FRAGMENT)
                 found_jpegs = f.find_all_jpegs(user_input_folder, phrase_to_include_in_file_name)
                 if found_jpegs is None:
                     return 0
