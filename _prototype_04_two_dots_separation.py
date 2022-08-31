@@ -4,7 +4,7 @@ import traceback
 
 import functions as f
 
-GIVE_ME_A_PATH_MESSAGE = "Podaj ścieżkę do folderu ze zdjęciami. W ścieżce nie może być polskich znaków ani spacji!:"
+GIVE_ME_A_PATH_MESSAGE = "Podaj ścieżkę do folderu ze zdjęciami. W ścieżce nie może być polskich znaków ani spacji."
 
 GIVE_ME_A_SEARCH_FRAGMENT = "Podaj frazę która ma się znajdować w nazwie pliku (np. numer otworu) aby przefiltrować zdjęcia," \
                             " lub naciśnij ENTER aby nie filtrować zdjęć:"
@@ -91,9 +91,9 @@ def calculate_scale(found_jpeg_path: Path, main_subject_folder):
     original_comment, subject_number_with_name = get_metadata(found_jpeg_path)
     if is_retrieve_metadata_if_possible_enabled:
         if is_exif_comment_tags_empty or is_exif_subject_number_with_name_empty:
-            print(f"Retrieving metadata...")
+            print(f"Odzyskiwanie metadanych...")
             f.exif_rewrite_all_exif_metadata(found_jpeg_path, original_comment, subject_number_with_name)
-            print(f"Metadata retrieved: subject={subject_number_with_name}, tags={original_comment}")
+            print(f"Odzyskane metadane: temat={subject_number_with_name}, dane={original_comment}")
         else:
             pass  # print(f"Metadata exist: subject={subject_number_with_name}, tags={original_comment}")
     if is_scale_calculation_enabled:
@@ -206,9 +206,9 @@ def proceed_scale_calculation(calculated_file_folder, is_zoom_in, original_file_
         is_dots_found = True
     if not is_dots_found:
         if len(left_dots) == 0:
-            print("LEFT CALIBRATION DOT NOT FOUND!")
+            print("LEFT CALIBRATION DOT NOT FOUND")
         if len(right_dots) == 0:
-            print("RIGHT CALIBRATION DOT NOT FOUND!")
+            print("RIGHT CALIBRATION DOT NOT FOUND")
         print("Scale cannot be calculated.")
     else:
         if is_zoom_in:
@@ -306,7 +306,7 @@ def request_path_to_find_photos():
     user_input = sys_get_input(GIVE_ME_A_PATH_MESSAGE)
     path = Path(user_input)
     if path.exists() and len(str(path)) > 0 and str(path) != ".":
-        if not path.is_file() and path.is_dir():
+        if path.is_dir():
             is_path_verified = verify_path_for_exiftool(path)
             if is_path_verified:
                 user_input_folder = str(os.path.abspath(path))
@@ -317,9 +317,9 @@ def request_path_to_find_photos():
                 else:
                     return len(found_jpegs)
             else:
-                print("Podana ścieżka posiada niedozwolone znaki, np. polskie litery. Usuń je!")
+                print("Podana ścieżka posiada niedozwolone znaki, np. polskie litery. Usuń je.")
         else:
-            print("Podana ścieżka to nie folder!")
+            print(f"To nie jest folder: {path.name}")
     else:
         print("Podana ścieżka jest nieprawidłowa.")
     return -1
